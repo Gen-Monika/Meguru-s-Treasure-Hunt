@@ -25,7 +25,7 @@ TButton::TButton(int i, int j)
     pic_black_on = ResourceManager::loadIcon(Default::file_of_button[i][j].t.pic_black_on);
     pic_black_off = ResourceManager::loadIcon(Default::file_of_button[i][j].t.pic_black_off);
     this->setStyleSheet("QPushButton { background-color: transparent; border: none; }"
-                        "QPushButton:hover { background-color: rgba{255,255,255,50}; }");
+                        "QPushButton:hover { background-color: rgba(255,255,255,50); }");
     this->setIcon(*pic_black_off);
     this->setIconSize(Default::button_size[i]);
 }

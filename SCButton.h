@@ -9,6 +9,7 @@
 #include <QIcon>
 #include <QMediaPlayer>
 #include <QAudioOutput>
+#include <QElapsedTimer>
 
 #include "config.h"
 
@@ -26,6 +27,8 @@ public:
     QAudioOutput* sound_hovered_output = nullptr;
     QMediaPlayer* sound_clicked_player = nullptr;
     QAudioOutput* sound_clicked_output = nullptr;
+private:
+    QElapsedTimer hover_sound_timer;
 signals:
     void hoverEnter();
     void hoverLeave();

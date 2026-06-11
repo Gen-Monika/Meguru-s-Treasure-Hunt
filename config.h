@@ -73,6 +73,17 @@ const int hole_dx = 30;
 const int hole_dy = 200;
 //Meguru的默认速度
 const double Meguru_speed = 3.605;
+const double diagonal_speed_factor = 0.7071;
+
+//Meguru移动边界比例
+const double Meguru_min_x_ratio = 0.0;
+const double Meguru_max_x_ratio = 114.0 / 128.0;
+const double Meguru_min_y_ratio = 3.0 / 128.0;
+const double Meguru_max_y_ratio = 85.0 / 128.0;
+
+//默认挖掘次数
+const int normal_dig_trials = 21;
+const int hard_dig_trials = 7;
 
 //宝藏的生成坐标区间
 //横坐标区间
@@ -136,8 +147,15 @@ const int select_scene_button = 6;
 //关卡内进入选关界面的按钮
 const int select_in_level_button = 7;
 
+//按钮数组容量和常用按钮数量
+const int button_group_capacity = 10;
+const int button_variant_capacity = 11;
+const int main_scene_button_count = extra_button;
+const int level_button_count = tenshin;
+const int select_scene_button_count = return_title_button;
+
 //按钮的默认大小,这里用数组保存,下标对应键值
-const QSize button_size[10] = { QSize(0,0),QSize(144,30),QSize(280,70),QSize(20,34),QSize(30,30),QSize(412,132),QSize(144,30),QSize(144,30) };
+const QSize button_size[button_group_capacity] = { QSize(0,0),QSize(144,30),QSize(280,70),QSize(20,34),QSize(30,30),QSize(412,132),QSize(144,30),QSize(144,30) };
                                   //空白     //刷新        //主界面       //音乐开关    //游戏内重试   //选择每个关卡   //选关界面    //关卡进选关
 
 //按钮类型的键值
@@ -147,7 +165,7 @@ const int sc = 2;//SCButton
 const int t = 3;//TButton
 
 //按钮的类型,同样用数组保存
-const int button_type[10][11] =
+const int button_type[button_group_capacity][button_variant_capacity] =
 {
     {0},//0索引空着不用
     {2},//1：刷新按钮
@@ -161,7 +179,7 @@ const int button_type[10][11] =
 
 
 //保存按钮文件的路径
-const File_of_button file_of_button[10][11] = {
+const File_of_button file_of_button[button_group_capacity][button_variant_capacity] = {
 
     // === 索引0：空着不用 ===
     {
@@ -428,7 +446,7 @@ const double bgm_volume = 0.5;
 const double voice_volume = 0.8;
 
 //关卡文件路径配置
-const File_of_level file_of_level[11] = {
+const File_of_level file_of_level[level_button_count + 1] = {
     // 索引0：空着不用
     {
         "", //bg
@@ -543,8 +561,9 @@ const File_of_level file_of_level[11] = {
 //界面的键值
 const int main_scene = 1;
 const int select_scene = 2;
+const int scene_capacity = 5;
 
-const File_of_scene file_of_scene[5] = {
+const File_of_scene file_of_scene[scene_capacity] = {
     //索引0：空着不用
     {
         "", //bg

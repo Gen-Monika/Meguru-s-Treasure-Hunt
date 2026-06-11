@@ -110,11 +110,11 @@ public:
 
     //按钮
     SCButton* refresh_button = nullptr;
-    SCButton* main_scene_button[6];
+    SCButton* main_scene_button[Default::main_scene_button_count + 1];
     TButton* music_button = nullptr;
     SCButton* retry_button = nullptr;
-    SCButton* level_button[11];
-    SCButton* select_scene_button[3];
+    SCButton* level_button[Default::level_button_count + 1];
+    SCButton* select_scene_button[Default::select_scene_button_count + 1];
     SCButton* select_in_level_button = nullptr;
 
     void import_buttons();//初始化按钮
@@ -168,7 +168,7 @@ public:
     Level* level_now_playing = nullptr;
 
     //关卡
-    Level* level[11];
+    Level* level[Default::level_button_count + 1];
 
     std::ofstream* backlog = nullptr;
 

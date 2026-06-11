@@ -41,15 +41,15 @@ Widget::~Widget()
     delete Meguru;
 
     delete refresh_button;
-    for(int i = 1;i<=5;++i){
+    for(int i = 1;i<=Default::main_scene_button_count;++i){
         delete main_scene_button[i];
     }
     delete music_button;
     delete retry_button;
-    for(int i = 1;i<=10;++i){
+    for(int i = 1;i<=Default::level_button_count;++i){
         delete level_button[i];
     }
-    for(int i = 1;i<=2;++i){
+    for(int i = 1;i<=Default::select_scene_button_count;++i){
         delete select_scene_button[i];
     }
     delete select_in_level_button;
@@ -90,7 +90,7 @@ void Widget::moveAndPlaceButton(QPushButton *button,QGraphicsScene *targetScene,
 void Widget::arrangeStartSceneButtons()
 {
     placeButton(refresh_button,LayoutConfig::start_refresh_button_pos);
-    for(int i = 1;i<=5;++i){
+    for(int i = 1;i<=Default::main_scene_button_count;++i){
         placeButton(main_scene_button[i],LayoutConfig::main_scene_button_pos[i]);
     }
     placeButton(music_button,LayoutConfig::start_music_button_pos);
@@ -115,7 +115,7 @@ void Widget::arrangeLevelSceneButtons(bool showCg)
 
 void Widget::arrangeLevelButtons()
 {
-    for(int i = 1;i<=10;++i){
+    for(int i = 1;i<=Default::level_button_count;++i){
         select_scene->addWidget(level_button[i]);
         placeButton(level_button[i],LayoutConfig::levelButtonPosition(i));
     }
@@ -357,12 +357,14 @@ void Widget::Meguru_move()
         }
     }
     if(key_count == 2){ //对角线减速
-        dx *= 0.7071;
-        dy *= 0.7071;
+        dx *= Default::diagonal_speed_factor;
+        dy *= Default::diagonal_speed_factor;
     }
     //边界判断
-    if( (Meguru->pos().x() <= pic_now_using->width()*0 && dx < 0) || (Meguru->pos().x() >= pic_now_using->width()*114/128 && dx > 0) ) dx *= 0.0;
-    if( (Meguru->pos().y() <= pic_now_using->height()*3/128 && dy < 0) || (Meguru->pos().y() >= pic_now_using->height()*85/128 && dy > 0) ) dy *= 0.0;
+    if( (Meguru->pos().x() <= pic_now_using->width() * Default::Meguru_min_x_ratio && dx < 0)
+        || (Meguru->pos().x() >= pic_now_using->width() * Default::Meguru_max_x_ratio && dx > 0) ) dx *= 0.0;
+    if( (Meguru->pos().y() <= pic_now_using->height() * Default::Meguru_min_y_ratio && dy < 0)
+        || (Meguru->pos().y() >= pic_now_using->height() * Default::Meguru_max_y_ratio && dy > 0) ) dy *= 0.0;
     x += dx;
     y += dy;
     //更新状态
@@ -537,7 +539,7 @@ QPointF Widget::get_hole_center(QGraphicsPixmapItem *hole)
 
 void Widget::build_level()
 {
-    for(int i = 1;i<=10;++i){
+    for(int i = 1;i<=Default::level_button_count;++i){
         level[i] = new Level(hard,i);
     }
 }
@@ -556,10 +558,10 @@ void Widget::refresh_level(Level *level)
     }
     level->now_hole_num = 0;
     if(hard){
-        level->dig_trials = 7;
+        level->dig_trials = Default::hard_dig_trials;
     }
     else{
-        level->dig_trials = 21;
+        level->dig_trials = Default::normal_dig_trials;
     }
     //生成浮点比例[0,1)
     double percent_x =QRandomGenerator::global()->generateDouble();
@@ -792,23 +794,23 @@ void Widget::import_pics()
 
 void Widget::import_buttons()
 {
-    refresh_button = new SCButton(1,0);
-    for(int i = 1;i<=5;++i){
-        main_scene_button[i] = new SCButton(2,i);
+    refresh_button = new SCButton(Default::refresh_button,0);
+    for(int i = 1;i<=Default::main_scene_button_count;++i){
+        main_scene_button[i] = new SCButton(Default::main_scene_button,i);
     }
-    music_button = new TButton(3,0);
-    retry_button = new SCButton(4,0);
-    for(int i = 1;i<=10;++i){
-        level_button[i] = new SCButton(5,i);
+    music_button = new TButton(Default::music_button,0);
+    retry_button = new SCButton(Default::retry_button,0);
+    for(int i = 1;i<=Default::level_button_count;++i){
+        level_button[i] = new SCButton(Default::level_button,i);
         connect(level_button[i], &SCButton::clicked, this, [this, i]() {
             level_button_Clicked(i);
             setFocus();
         });
     }
-    for(int i = 1;i<=2;++i){
-        select_scene_button[i] = new SCButton(6,i);
+    for(int i = 1;i<=Default::select_scene_button_count;++i){
+        select_scene_button[i] = new SCButton(Default::select_scene_button,i);
     }
-    select_in_level_button = new SCButton(7,0);
+    select_in_level_button = new SCButton(Default::select_in_level_button,0);
 }
 
 void Widget::import_audios()
@@ -842,11 +844,6 @@ void Widget::refresh_button_Clicked(){
     refresh_button->sound_clicked_player->stop();
     resize(Default::bg_size);
     refresh_button->sound_clicked_player->play();
-    //fadeout_music(1000);
-    //fadeout_PixmapItem(Meguru,1000);
-    //delay_for(1000);
-    //fadein_PixmapItem(Meguru,1000);
-    //fadein_music(bgm_bg_shinku,1000);
     setFocus();
     return;
 }
@@ -854,9 +851,9 @@ void Widget::refresh_button_Clicked(){
 void Widget::guide_button_Clicked()
 {
     main_scene_button[Default::guide_button]->sound_clicked_player->stop();
-    main_scene_button[Default::guide_button]->sound_clicked_player->stop();
+    main_scene_button[Default::guide_button]->sound_clicked_player->play();
     main_scene_button[Default::guide_button]->setIcon(*main_scene_button[Default::guide_button]->pic_normal);
-    turn_to_level(level[1]);
+    turn_to_level(level[Default::senren_0]);
     setFocus();
     return;
 }
@@ -1003,10 +1000,42 @@ void Widget::retry_button_Clicked(){
     retry_button->sound_clicked_player->stop();
     retry_button->sound_clicked_player->play();
     retry_button->setIcon(*retry_button->pic_normal);
+
+    Level* level = level_now_playing;
+    if(level == nullptr){
+        setFocus();
+        return;
+    }
+
+    if(music_on){
+        fadeout_music(Default::fadeout_time);
+    }
+    fadeout_scene(Default::fadeout_time);
+    delay_for(Default::fadeout_time);
+
     scene->removeItem(Meguru);
     scene->removeItem(Meguru->text_now_on);
-    scene->removeItem(level_now_playing->text_of_cg);
-    turn_to_level(level_now_playing);
+    scene->removeItem(level->text_of_cg);
+    refresh_level(level);
+
+    fadein_scene(scene,Default::fadein_time);
+    music_now_playing = level->bgm_of_bg;
+    pic_now_using = level->pic_of_bg;
+    scene->addItem(level->level_bg);
+    scene->setSceneRect(pic_now_using->rect());
+    ui->bg->fitInView(scene->sceneRect(),Qt::KeepAspectRatio);
+    prev_scene = scene;
+
+    Meguru_refresh();
+    scene->addItem(Meguru);
+
+    arrangeLevelSceneButtons(false);
+    if(level->isdark) music_button->turn_to_white(Default::music_button);
+    else music_button->turn_to_black(Default::music_button);
+    if(music_on){
+        delay_for(Default::fadein_time);
+        fadein_music(music_now_playing,Default::fadein_time);
+    }
     setFocus();
 };
 

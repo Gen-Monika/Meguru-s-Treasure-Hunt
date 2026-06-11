@@ -1,29 +1,37 @@
 #include "SCButton.h"
 #include "ResourceManager.h"
 
+namespace {
+constexpr qint64 hover_sound_cooldown_ms = 80;
+}
+
 SCButton::SCButton()
     : QPushButton() {
     setMouseTracking(true);
+    setAttribute(Qt::WA_Hover, true);
 }
 
 SCButton::SCButton(QWidget* parent)
     : QPushButton(parent) {
     setMouseTracking(true);
+    setAttribute(Qt::WA_Hover, true);
 }
 
 SCButton::SCButton(const QString& text, QWidget* parent)
     : QPushButton(text, parent) {
     setMouseTracking(true);
+    setAttribute(Qt::WA_Hover, true);
 }
 
 SCButton::SCButton(int i, int j)
 {
     setMouseTracking(true);
+    setAttribute(Qt::WA_Hover, true);
     this->setFixedSize(Default::button_size[i]);
     pic_normal = ResourceManager::loadIcon(Default::file_of_button[i][j].sc.pic_normal);
     pic_hovered = ResourceManager::loadIcon(Default::file_of_button[i][j].sc.pic_hovered);
     this->setStyleSheet("QPushButton { background-color: transparent; border: none; }"
-                        "QPushButton:hover { background-color: rgba{255,255,255,50}; }");
+                        "QPushButton:hover { background-color: rgba(255,255,255,50); }");
     this->setIcon(*pic_normal);
     this->setIconSize(Default::button_size[i]);
 
@@ -71,16 +79,29 @@ void SCButton::mouseMoveEvent(QMouseEvent* event) {
 
 void SCButton::button_hoverEnter()
 {
-    sound_hovered_player->stop();
-    sound_hovered_player->play();
-    this->setIcon(*pic_hovered);
-    setFocus();
+    if(pic_hovered != nullptr){
+        this->setIcon(*pic_hovered);
+        this->setIconSize(size());
+    }
+    update();
+
+    if(sound_hovered_player != nullptr
+        && !sound_hovered_player->source().isEmpty()
+        && (!hover_sound_timer.isValid()
+            || hover_sound_timer.elapsed() >= hover_sound_cooldown_ms)){
+        sound_hovered_player->stop();
+        sound_hovered_player->play();
+        hover_sound_timer.restart();
+    }
     return;
 }
 
 void SCButton::button_hoverLeave()
 {
-    this->setIcon(*pic_normal);
-    setFocus();
+    if(pic_normal != nullptr){
+        this->setIcon(*pic_normal);
+        this->setIconSize(size());
+    }
+    update();
     return;
 }

@@ -1,6 +1,8 @@
 #ifndef LAYOUTCONFIG_H
 #define LAYOUTCONFIG_H
 
+#include "config.h"
+
 namespace LayoutConfig {
 
 struct PositionRatio {
@@ -11,7 +13,7 @@ struct PositionRatio {
 const PositionRatio start_refresh_button_pos = {1.0 / 128.0, 1.0 / 128.0};
 const PositionRatio start_music_button_pos = {1.0 / 8.0, 1.0 / 256.0};
 
-const PositionRatio main_scene_button_pos[6] = {
+const PositionRatio main_scene_button_pos[Default::main_scene_button_count + 1] = {
     {0.0, 0.0},
     {6.7 / 9.0, 1.9 / 5.0},
     {6.7 / 9.0, 2.5 / 5.0},

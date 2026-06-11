@@ -22,7 +22,7 @@ ColoredButton::ColoredButton(int i, int j)
     this->setFixedSize(Default::button_size[i]);
     pic = ResourceManager::loadIcon(Default::file_of_button[i][j].colored.pic);
     this->setStyleSheet("QPushButton { background-color: transparent; border: none; }"
-                          "QPushButton:hover { background-color: rgba{255,255,255,50}; }");
+                          "QPushButton:hover { background-color: rgba(255,255,255,50); }");
     this->setIcon(*pic);
     this->setIconSize(Default::button_size[i]);
 }
