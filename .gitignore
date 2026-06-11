@@ -1,0 +1,28 @@
+# Qt / qmake build outputs
+build/
+build-*/
+debug/
+release/
+*.o
+*.obj
+*.exe
+*.dll
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# Qt Creator user-local files
+*.user
+*.user.*
+*.pro.user
+*.autosave
+
+# Runtime logs / generated local state
+backlog.txt
+*.log
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.vs/
