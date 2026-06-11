@@ -2,14 +2,14 @@
 
 meguru::meguru() {
     //设置ciallo音效
-    sound_ciallo = new QUrl(PathUtils::audioUrl(PATH_OF_SOUND_CIALLO));
+    sound_ciallo = ResourceManager::loadAudioUrl(PATH_OF_SOUND_CIALLO);
     sound_ciallo_player = new QMediaPlayer();
     sound_ciallo_output = new QAudioOutput();
     sound_ciallo_player->setAudioOutput(sound_ciallo_output);
     sound_ciallo_player->setSource(*sound_ciallo);
     sound_ciallo_output->setVolume(Default::voice_volume);
     //设置获胜音效
-    sound_win = new QUrl(PathUtils::audioUrl(PATH_OF_SOUND_WIN));
+    sound_win = ResourceManager::loadAudioUrl(PATH_OF_SOUND_WIN);
     sound_win_player = new QMediaPlayer();
     sound_win_output = new QAudioOutput();
     sound_win_player->setAudioOutput(sound_win_output);

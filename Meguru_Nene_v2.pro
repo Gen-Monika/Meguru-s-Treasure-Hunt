@@ -11,6 +11,7 @@ CONFIG += c++17
 SOURCES += \
     ColoredButton.cpp \
     PathUtils.cpp \
+    ResourceManager.cpp \
     SCButton.cpp \
     TButton.cpp \
     level.cpp \
@@ -20,7 +21,9 @@ SOURCES += \
 
 HEADERS += \
     ColoredButton.h \
+    LayoutConfig.h \
     PathUtils.h \
+    ResourceManager.h \
     SCButton.h \
     TButton.h \
     config.h \

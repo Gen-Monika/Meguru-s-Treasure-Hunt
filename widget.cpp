@@ -1,6 +1,7 @@
 #include "widget.h"
 #include "ui_widget.h"
 #include "PathUtils.h"
+#include "ResourceManager.h"
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
@@ -56,6 +57,68 @@ Widget::~Widget()
     delete backlog;
 
     delete ui;
+}
+
+QPoint Widget::layoutPoint(const LayoutConfig::PositionRatio &position) const
+{
+    if(pic_now_using == nullptr){
+        return QPoint();
+    }
+    return QPoint(
+        static_cast<int>(pic_now_using->width() * position.x),
+        static_cast<int>(pic_now_using->height() * position.y)
+    );
+}
+
+void Widget::placeButton(QPushButton *button,const LayoutConfig::PositionRatio &position)
+{
+    if(button == nullptr){
+        return;
+    }
+    button->move(layoutPoint(position));
+}
+
+void Widget::moveAndPlaceButton(QPushButton *button,QGraphicsScene *targetScene,const LayoutConfig::PositionRatio &position)
+{
+    if(button == nullptr || targetScene == nullptr){
+        return;
+    }
+    move_button(button,targetScene);
+    placeButton(button,position);
+}
+
+void Widget::arrangeStartSceneButtons()
+{
+    placeButton(refresh_button,LayoutConfig::start_refresh_button_pos);
+    for(int i = 1;i<=5;++i){
+        placeButton(main_scene_button[i],LayoutConfig::main_scene_button_pos[i]);
+    }
+    placeButton(music_button,LayoutConfig::start_music_button_pos);
+}
+
+void Widget::arrangeSelectSceneButtons()
+{
+    moveAndPlaceButton(refresh_button,select_scene,LayoutConfig::select_refresh_button_pos);
+    moveAndPlaceButton(music_button,select_scene,LayoutConfig::select_music_button_pos);
+    moveAndPlaceButton(select_scene_button[Default::return_title_button],select_scene,LayoutConfig::select_return_title_button_pos);
+    moveAndPlaceButton(select_scene_button[Default::return_prev_button],select_scene,LayoutConfig::select_return_prev_button_pos);
+}
+
+void Widget::arrangeLevelSceneButtons(bool showCg)
+{
+    moveAndPlaceButton(select_scene_button[Default::return_title_button],scene,LayoutConfig::level_return_title_button_pos);
+    moveAndPlaceButton(select_in_level_button,scene,LayoutConfig::level_select_button_pos);
+    moveAndPlaceButton(refresh_button,scene,LayoutConfig::level_refresh_button_pos);
+    moveAndPlaceButton(music_button,scene,LayoutConfig::level_music_button_pos);
+    moveAndPlaceButton(retry_button,scene,showCg ? LayoutConfig::level_cg_retry_button_pos : LayoutConfig::level_retry_button_pos);
+}
+
+void Widget::arrangeLevelButtons()
+{
+    for(int i = 1;i<=10;++i){
+        select_scene->addWidget(level_button[i]);
+        placeButton(level_button[i],LayoutConfig::levelButtonPosition(i));
+    }
 }
 
 void Widget::load_timer()
@@ -535,16 +598,7 @@ void Widget::turn_to_level(Level *level)
     Meguru_refresh();
     scene->addItem(Meguru);
 
-    move_button(select_scene_button[Default::return_title_button],scene);
-    select_scene_button[Default::return_title_button]->move(pic_now_using->width()*95/128,pic_now_using->height()*3.5/128);
-    move_button(select_in_level_button,scene);
-    select_in_level_button->move(pic_now_using->width()*80/128,pic_now_using->height()*3.5/128);
-    move_button(refresh_button,scene);
-    refresh_button->move(pic_now_using->width()*111/128,pic_now_using->height()*3.5/128);
-    move_button(music_button,scene);
-    music_button->move(pic_now_using->width()*76/128,pic_now_using->height()*3.25/128);
-    move_button(retry_button,scene);
-    retry_button->move(pic_now_using->width()*71/128,pic_now_using->height()*3.25/128);
+    arrangeLevelSceneButtons(false);
 
     if(level->isdark) music_button->turn_to_white(Default::music_button);
     else music_button->turn_to_black(Default::music_button);
@@ -642,16 +696,7 @@ void Widget::show_cg(Level *level)
     scene->setSceneRect(pic_now_using->rect());//设置舞台的矩形尺寸,以契合演员图像的大小
     ui->bg->fitInView(scene->sceneRect(),Qt::KeepAspectRatio);//将摄像机的大小初始与舞台大小固定
 
-    move_button(select_scene_button[Default::return_title_button],scene);
-    select_scene_button[Default::return_title_button]->move(pic_now_using->width()*95/128,pic_now_using->height()*3.5/128);
-    move_button(select_in_level_button,scene);
-    select_in_level_button->move(pic_now_using->width()*80/128,pic_now_using->height()*3.5/128);
-    move_button(refresh_button,scene);
-    refresh_button->move(pic_now_using->width()*111/128,pic_now_using->height()*3.5/128);
-    move_button(music_button,scene);
-    music_button->move(pic_now_using->width()*76/128,pic_now_using->height()*3.25/128);
-    move_button(retry_button,scene);
-    retry_button->move(pic_now_using->width()*71/128,pic_now_using->height()*3.5/128);
+    arrangeLevelSceneButtons(true);
     if(music_on){
         delay_for(Default::fadein_time);
         fadein_music(music_now_playing,Default::fadein_time);
@@ -729,17 +774,17 @@ void Widget::import_pics()
 {
     //演员,也就是bg和cg的初始化,这里首先是bg
     bg_start = new QGraphicsPixmapItem();
-    pic_bg_start = new QPixmap(PathUtils::resourcePath(PATH_OF_PIC_BG_START));//给演员设置图像
+    pic_bg_start = ResourceManager::loadPixmap(PATH_OF_PIC_BG_START);//给演员设置图像
     *pic_bg_start = pic_bg_start->scaled(Default::bg_size,Qt::KeepAspectRatio);//缩放大小,并保证长宽比
     bg_start->setPixmap(*pic_bg_start);
 
     bg_select = new QGraphicsPixmapItem();
-    pic_bg_select = new QPixmap(PathUtils::resourcePath(PATH_OF_PIC_BG_SELECT));//给演员设置图像
+    pic_bg_select = ResourceManager::loadPixmap(PATH_OF_PIC_BG_SELECT);//给演员设置图像
     *pic_bg_select = pic_bg_select->scaled(Default::bg_size,Qt::KeepAspectRatio);//缩放大小,并保证长宽比
     bg_select->setPixmap(*pic_bg_select);
 
     //洞
-    pic_of_hole = new QPixmap(PathUtils::resourcePath(PATH_OF_HOLE));
+    pic_of_hole = ResourceManager::loadPixmap(PATH_OF_HOLE);
     *pic_of_hole = pic_of_hole->scaled(Default::hole_size,Qt::KeepAspectRatio);
     hole_test = new QGraphicsPixmapItem(*pic_of_hole);
 
@@ -768,7 +813,7 @@ void Widget::import_buttons()
 
 void Widget::import_audios()
 {
-    bgm_bg_start = new QUrl(PathUtils::audioUrl(PATH_OF_bgm_bg_start));
+    bgm_bg_start = ResourceManager::loadAudioUrl(PATH_OF_bgm_bg_start);
 }
 
 void Widget::music_button_Clicked()
@@ -825,15 +870,8 @@ void Widget::select_button_Clicked()
     select_scene->setSceneRect(pic_now_using->rect());
     ui->bg->fitInView(select_scene->sceneRect(),Qt::KeepAspectRatio);//将摄像机的大小初始与舞台大小固定
     ui->bg->setScene(select_scene);
-    move_button(refresh_button,select_scene);
-    refresh_button->move(pic_now_using->width()*111/128,pic_now_using->height()*3.5/128);
-    move_button(music_button,select_scene);
-    music_button->move(pic_now_using->width()*106/128,pic_now_using->height()*3.25/128);
+    arrangeSelectSceneButtons();
     music_button->turn_to_black(Default::music_button);
-    move_button(select_scene_button[Default::return_title_button],select_scene);
-    select_scene_button[Default::return_title_button]->move(pic_now_using->width()*96/128,pic_now_using->height()*120/128);
-    move_button(select_scene_button[Default::return_prev_button],select_scene);
-    select_scene_button[Default::return_prev_button]->move(pic_now_using->width()*111/128,pic_now_using->height()*120/128);
     main_scene_button[Default::select_button]->setIcon(*main_scene_button[Default::select_button]->pic_normal);
     setFocus();
     return;
@@ -875,15 +913,8 @@ void Widget::select_in_level_button_Clicked(){
     select_scene->setSceneRect(pic_now_using->rect());
     ui->bg->fitInView(select_scene->sceneRect(),Qt::KeepAspectRatio);//将摄像机的大小初始与舞台大小固定
     ui->bg->setScene(select_scene);
-    move_button(refresh_button,select_scene);
-    refresh_button->move(pic_now_using->width()*111/128,pic_now_using->height()*3.5/128);
-    move_button(music_button,select_scene);
-    music_button->move(pic_now_using->width()*106/128,pic_now_using->height()*3.25/128);
+    arrangeSelectSceneButtons();
     music_button->turn_to_black(Default::music_button);
-    move_button(select_scene_button[Default::return_title_button],select_scene);
-    select_scene_button[Default::return_title_button]->move(pic_now_using->width()*96/128,pic_now_using->height()*120/128);
-    move_button(select_scene_button[Default::return_prev_button],select_scene);
-    select_scene_button[Default::return_prev_button]->move(pic_now_using->width()*111/128,pic_now_using->height()*120/128);
     setFocus();
     return;
 }
@@ -910,20 +941,17 @@ void Widget::return_prev_button_Clicked(){
         ui->bg->fitInView(start_scene->sceneRect(),Qt::KeepAspectRatio);//将摄像机的大小初始与舞台大小固定
         ui->bg->setScene(start_scene);
         move_button(refresh_button,start_scene);
-        refresh_button->move(pic_now_using->width()/128,pic_now_using->height()/128);
         move_button(music_button,start_scene);
-        music_button->move(pic_now_using->width()/8,pic_now_using->height()/256);
+        pic_now_using = pic_bg_start;
+        arrangeStartSceneButtons();
         setFocus();
     }
     else if(prev_scene == scene){
         ui->bg->fitInView(scene->sceneRect(),Qt::KeepAspectRatio);//将摄像机的大小初始与舞台大小固定
         ui->bg->setScene(scene);
-        move_button(refresh_button,scene);
-        select_scene_button[Default::return_title_button]->move(pic_now_using->width()*95/128,pic_now_using->height()*3.5/128);
-        move_button(music_button,scene);
-        music_button->move(pic_now_using->width()*76/128,pic_now_using->height()*3.25/128);
+        pic_now_using = level_now_playing->cg_on ? level_now_playing->pic_of_cg : level_now_playing->pic_of_bg;
+        arrangeLevelSceneButtons(level_now_playing->cg_on);
         if(level_now_playing->isdark) music_button->turn_to_white(Default::music_button);
-        move_button(select_scene_button[Default::return_title_button],scene);
         setFocus();
     }
     return;
@@ -937,9 +965,9 @@ void Widget::return_title_button_Clicked(){
         ui->bg->fitInView(start_scene->sceneRect(),Qt::KeepAspectRatio);//将摄像机的大小初始与舞台大小固定
         ui->bg->setScene(start_scene);
         move_button(refresh_button,start_scene);
-        refresh_button->move(pic_now_using->width()/128,pic_now_using->height()/128);
         move_button(music_button,start_scene);
-        music_button->move(pic_now_using->width()/8,pic_now_using->height()/256);
+        pic_now_using = pic_bg_start;
+        arrangeStartSceneButtons();
         music_button->turn_to_black(Default::music_button);
         setFocus();
     }
@@ -957,9 +985,9 @@ void Widget::return_title_button_Clicked(){
         ui->bg->fitInView(start_scene->sceneRect(),Qt::KeepAspectRatio);//将摄像机的大小初始与舞台大小固定
         ui->bg->setScene(start_scene);
         move_button(refresh_button,start_scene);
-        refresh_button->move(pic_now_using->width()/128,pic_now_using->height()/128);
         move_button(music_button,start_scene);
-        music_button->move(pic_now_using->width()/8,pic_now_using->height()/256);
+        pic_now_using = pic_bg_start;
+        arrangeStartSceneButtons();
         music_button->turn_to_black(Default::music_button);
         music_now_playing = bgm_bg_start;
         if(music_on){
@@ -1017,64 +1045,36 @@ void Widget::init_game()
     import_buttons();
 
     //加载按钮
-    refresh_button->move(pic_now_using->width()/128,pic_now_using->height()/128);//将按钮的位置和背景绑定
+    arrangeStartSceneButtons();
     start_scene->addWidget(refresh_button);
     connect(refresh_button,&SCButton::clicked,this,&Widget::refresh_button_Clicked);
-
-    main_scene_button[Default::guide_button]->move(pic_now_using->width()*6.7/9,pic_now_using->height()*1.9/5);
     start_scene->addWidget(main_scene_button[Default::guide_button]);
     connect(main_scene_button[Default::guide_button],&SCButton::clicked,this,&Widget::guide_button_Clicked);
-
-    main_scene_button[Default::select_button]->move(pic_now_using->width()*6.7/9,pic_now_using->height()*2.5/5);
     start_scene->addWidget(main_scene_button[Default::select_button]);
     connect(main_scene_button[Default::select_button],&SCButton::clicked,this,&Widget::select_button_Clicked);
-
-    main_scene_button[Default::extra_button]->move(pic_now_using->width()*6.7/9,pic_now_using->height()*3.1/5);
     start_scene->addWidget(main_scene_button[Default::extra_button]);
     connect(main_scene_button[Default::extra_button],&SCButton::clicked,this,&Widget::extra_button_Clicked);
-
-    main_scene_button[Default::system_button]->move(pic_now_using->width()*6.7/9,pic_now_using->height()*3.7/5);
     start_scene->addWidget(main_scene_button[Default::system_button]);
     connect(main_scene_button[Default::system_button],&SCButton::clicked,this,&Widget::system_button_Clicked);
-
-    main_scene_button[Default::exit_button]->move(pic_now_using->width()*6.7/9,pic_now_using->height()*4.3/5);
     start_scene->addWidget(main_scene_button[Default::exit_button]);
     connect(main_scene_button[Default::exit_button],&SCButton::clicked,this,&Widget::exit_button_Clicked);
 
     select_scene->addWidget(select_scene_button[Default::return_title_button]);
+    placeButton(select_scene_button[Default::return_title_button],LayoutConfig::select_return_title_button_pos);
     select_scene->addWidget(select_scene_button[Default::return_prev_button]);
+    placeButton(select_scene_button[Default::return_prev_button],LayoutConfig::select_return_prev_button_pos);
     connect(select_scene_button[Default::return_title_button],&SCButton::clicked,this,&Widget::return_title_button_Clicked);
     connect(select_scene_button[Default::return_prev_button],&SCButton::clicked,this,&Widget::return_prev_button_Clicked);
 
     connect(select_in_level_button,&SCButton::clicked,this,&Widget::select_in_level_button_Clicked);
 
-    select_scene->addWidget(level_button[1]);
-    level_button[1]->move(pic_now_using->width()*1/128,pic_now_using->height()*20/128);
-    select_scene->addWidget(level_button[2]);
-    level_button[2]->move(pic_now_using->width()*43.5/128,pic_now_using->height()*20/128);
-    select_scene->addWidget(level_button[3]);
-    level_button[3]->move(pic_now_using->width()*86/128,pic_now_using->height()*20/128);
-    select_scene->addWidget(level_button[4]);
-    level_button[4]->move(pic_now_using->width()*1/128,pic_now_using->height()*45/128);
-    select_scene->addWidget(level_button[5]);
-    level_button[5]->move(pic_now_using->width()*43.5/128,pic_now_using->height()*45/128);
-    select_scene->addWidget(level_button[6]);
-    level_button[6]->move(pic_now_using->width()*86/128,pic_now_using->height()*45/128);
-    select_scene->addWidget(level_button[7]);
-    level_button[7]->move(pic_now_using->width()*1/128,pic_now_using->height()*70/128);
-    select_scene->addWidget(level_button[8]);
-    level_button[8]->move(pic_now_using->width()*43.5/128,pic_now_using->height()*70/128);
-    select_scene->addWidget(level_button[9]);
-    level_button[9]->move(pic_now_using->width()*86/128,pic_now_using->height()*70/128);
-    select_scene->addWidget(level_button[10]);
-    level_button[10]->move(pic_now_using->width()*1/128,pic_now_using->height()*95/128);
+    arrangeLevelButtons();
 
 
-    music_button->move(pic_now_using->width()/8,pic_now_using->height()/256);
     start_scene->addWidget(music_button);
     connect(music_button,&TButton::clicked,this,&Widget::music_button_Clicked);
 
-    retry_button->move(pic_now_using->width()/8,pic_now_using->height()/256);
+    placeButton(retry_button,LayoutConfig::start_music_button_pos);
     scene->addWidget(retry_button);
     connect(retry_button,&ColoredButton::clicked,this,&Widget::retry_button_Clicked);
 

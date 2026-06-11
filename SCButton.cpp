@@ -1,5 +1,5 @@
 #include "SCButton.h"
-#include "PathUtils.h"
+#include "ResourceManager.h"
 
 SCButton::SCButton()
     : QPushButton() {
@@ -20,8 +20,8 @@ SCButton::SCButton(int i, int j)
 {
     setMouseTracking(true);
     this->setFixedSize(Default::button_size[i]);
-    pic_normal = new QIcon(PathUtils::resourcePath(Default::file_of_button[i][j].sc.pic_normal));
-    pic_hovered = new QIcon(PathUtils::resourcePath(Default::file_of_button[i][j].sc.pic_hovered));
+    pic_normal = ResourceManager::loadIcon(Default::file_of_button[i][j].sc.pic_normal);
+    pic_hovered = ResourceManager::loadIcon(Default::file_of_button[i][j].sc.pic_hovered);
     this->setStyleSheet("QPushButton { background-color: transparent; border: none; }"
                         "QPushButton:hover { background-color: rgba{255,255,255,50}; }");
     this->setIcon(*pic_normal);
@@ -30,13 +30,13 @@ SCButton::SCButton(int i, int j)
     sound_clicked_player = new QMediaPlayer();
     sound_clicked_output = new QAudioOutput();
     sound_clicked_player->setAudioOutput(sound_clicked_output);
-    sound_clicked_player->setSource(PathUtils::audioUrl(Default::file_of_button[i][j].sc.sound_clicked));
+    sound_clicked_player->setSource(ResourceManager::audioUrl(Default::file_of_button[i][j].sc.sound_clicked));
     sound_clicked_output->setVolume(Default::button_volume);
 
     sound_hovered_player = new QMediaPlayer();
     sound_hovered_output = new QAudioOutput();
     sound_hovered_player->setAudioOutput(sound_hovered_output);
-    sound_hovered_player->setSource(PathUtils::audioUrl(Default::file_of_button[i][j].sc.sound_hovered));
+    sound_hovered_player->setSource(ResourceManager::audioUrl(Default::file_of_button[i][j].sc.sound_hovered));
     sound_hovered_output->setVolume(Default::button_volume);
 
     connect(this,&SCButton::hoverEnter,this,&SCButton::button_hoverEnter);

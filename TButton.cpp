@@ -1,5 +1,5 @@
 #include "TButton.h"
-#include "PathUtils.h"
+#include "ResourceManager.h"
 
 TButton::TButton()
     : QPushButton() {
@@ -20,10 +20,10 @@ TButton::TButton(int i, int j)
 {
     setMouseTracking(true);
     this->setFixedSize(Default::button_size[i]);
-    pic_white_on = new QIcon(PathUtils::resourcePath(Default::file_of_button[i][j].t.pic_white_on));
-    pic_white_off = new QIcon(PathUtils::resourcePath(Default::file_of_button[i][j].t.pic_white_off));
-    pic_black_on = new QIcon(PathUtils::resourcePath(Default::file_of_button[i][j].t.pic_black_on));
-    pic_black_off = new QIcon(PathUtils::resourcePath(Default::file_of_button[i][j].t.pic_black_off));
+    pic_white_on = ResourceManager::loadIcon(Default::file_of_button[i][j].t.pic_white_on);
+    pic_white_off = ResourceManager::loadIcon(Default::file_of_button[i][j].t.pic_white_off);
+    pic_black_on = ResourceManager::loadIcon(Default::file_of_button[i][j].t.pic_black_on);
+    pic_black_off = ResourceManager::loadIcon(Default::file_of_button[i][j].t.pic_black_off);
     this->setStyleSheet("QPushButton { background-color: transparent; border: none; }"
                         "QPushButton:hover { background-color: rgba{255,255,255,50}; }");
     this->setIcon(*pic_black_off);

@@ -1,5 +1,5 @@
 #include "level.h"
-#include "PathUtils.h"
+#include "ResourceManager.h"
 
 Level::Level(bool hard,QPixmap* pic_bg,QPixmap* pic_cg,QPixmap* pic_text_cg,QUrl* bgm_bg,QUrl* bgm_cg,QUrl* sound_text,bool dark) {
     if(hard){
@@ -65,12 +65,12 @@ Level::Level(bool hard,int i)
 
     if(i == Default::shinku || i == Default::cafe_0) this->isdark = true;
 
-    this->pic_of_bg = new QPixmap(PathUtils::resourcePath(Default::file_of_level[i].bg));
-    this->pic_of_cg = new QPixmap(PathUtils::resourcePath(Default::file_of_level[i].cg));
-    this->pic_text_of_cg = new QPixmap(PathUtils::resourcePath(Default::file_of_level[i].text));
-    this->bgm_of_bg = new QUrl(PathUtils::audioUrl(Default::file_of_level[i].bgm_bg));
-    this->bgm_of_cg = new QUrl(PathUtils::audioUrl(Default::file_of_level[i].bgm_cg));
-    this->sound_of_text = new QUrl(PathUtils::audioUrl(Default::file_of_level[i].sound_text));
+    this->pic_of_bg = ResourceManager::loadPixmap(Default::file_of_level[i].bg);
+    this->pic_of_cg = ResourceManager::loadPixmap(Default::file_of_level[i].cg);
+    this->pic_text_of_cg = ResourceManager::loadPixmap(Default::file_of_level[i].text);
+    this->bgm_of_bg = ResourceManager::loadAudioUrl(Default::file_of_level[i].bgm_bg);
+    this->bgm_of_cg = ResourceManager::loadAudioUrl(Default::file_of_level[i].bgm_cg);
+    this->sound_of_text = ResourceManager::loadAudioUrl(Default::file_of_level[i].sound_text);
 
     level_bg = new QGraphicsPixmapItem();
     *pic_of_bg=pic_of_bg->scaled(Default::bg_size,Qt::KeepAspectRatio);

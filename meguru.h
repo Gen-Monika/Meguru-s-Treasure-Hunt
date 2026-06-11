@@ -7,13 +7,13 @@
 #include <qdebug.h>
 
 #include "config.h"
-#include "PathUtils.h"
+#include "ResourceManager.h"
 
-#define import_meguru_item(state) state = new QPixmap(PathUtils::resourcePath(PATH_OF_##state));\
+#define import_meguru_item(state) state = ResourceManager::loadPixmap(PATH_OF_##state);\
 *state=state->scaled(Default::Meguru_size,Qt::KeepAspectRatio);
 
 #define import_meguru_related_item(state) state = new QGraphicsPixmapItem();\
-pic_##state = new QPixmap(PathUtils::resourcePath(PATH_OF_##state));\
+pic_##state = ResourceManager::loadPixmap(PATH_OF_##state);\
 *pic_##state=pic_##state->scaled(Default::text_size,Qt::KeepAspectRatio);\
 state->setPixmap(*pic_##state);\
 state->setPos(0,Default::bg_size.height()-Default::text_size.height());\

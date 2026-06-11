@@ -8,6 +8,7 @@
 #include <QPainter>
 #include <QImage>
 #include <QDebug>
+#include <QPoint>
 #include <QPushButton>
 #include <QSize>
 #include <QMouseEvent>
@@ -30,6 +31,7 @@
 #include <string>
 
 #include "config.h"
+#include "LayoutConfig.h"
 #include "ColoredButton.h"
 #include "TButton.h"
 #include "SCButton.h"
@@ -206,6 +208,14 @@ private slots:
     void select_in_level_button_Clicked();
 
 private:
+    QPoint layoutPoint(const LayoutConfig::PositionRatio& position) const;
+    void placeButton(QPushButton* button,const LayoutConfig::PositionRatio& position);
+    void moveAndPlaceButton(QPushButton* button,QGraphicsScene* scene,const LayoutConfig::PositionRatio& position);
+    void arrangeStartSceneButtons();
+    void arrangeSelectSceneButtons();
+    void arrangeLevelSceneButtons(bool showCg);
+    void arrangeLevelButtons();
+
     Ui::Widget *ui;
 };
 

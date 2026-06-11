@@ -1,5 +1,5 @@
 #include "ColoredButton.h"
-#include "PathUtils.h"
+#include "ResourceManager.h"
 
 ColoredButton::ColoredButton()
     : QPushButton() {
@@ -20,7 +20,7 @@ ColoredButton::ColoredButton(int i, int j)
 {
     setMouseTracking(true);
     this->setFixedSize(Default::button_size[i]);
-    pic = new QIcon(PathUtils::resourcePath(Default::file_of_button[i][j].colored.pic));
+    pic = ResourceManager::loadIcon(Default::file_of_button[i][j].colored.pic);
     this->setStyleSheet("QPushButton { background-color: transparent; border: none; }"
                           "QPushButton:hover { background-color: rgba{255,255,255,50}; }");
     this->setIcon(*pic);
