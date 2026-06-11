@@ -112,7 +112,7 @@ public:
     SCButton* refresh_button = nullptr;
     SCButton* main_scene_button[6];
     TButton* music_button = nullptr;
-    ColoredButton* retry_button = nullptr;
+    SCButton* retry_button = nullptr;
     SCButton* level_button[11];
     SCButton* select_scene_button[3];
     SCButton* select_in_level_button = nullptr;

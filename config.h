@@ -153,7 +153,7 @@ const int button_type[10][11] =
     {2},//1：刷新按钮
     {0,2,2,2,2,2},//2：主界面按钮
     {3},//3：音乐开关按钮
-    {1},//4：游戏内重试按钮
+    {2},//4：游戏内重试按钮
     {0,2,2,2,2,2,2,2,2,2,2},//5：选择每个关卡的按钮
     {0,2,2},//6：选关界面的按钮
     {2}//7：关卡内进入选关界面的按钮
@@ -261,11 +261,16 @@ const File_of_button file_of_button[10][11] = {
         }
     },
 
-    // === 索引4：游戏内重试按钮 (Colored类型) ===
+    // === 索引4：游戏内重试按钮 (SC类型) ===
     {
         {    // retry_button = 4
-            {"../../Resources/Pictures/Icon-s/Button-s/非主菜单的按钮/重试按钮.png"},
             {},
+            {
+                "../../Resources/Pictures/Icon-s/Button-s/非主菜单的按钮/重试按钮-0.png",
+                "../../Resources/Pictures/Icon-s/Button-s/非主菜单的按钮/重试按钮-1.png",
+                "../../Resources/Audios/Sound-s/button_hovered.ogg",
+                "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
+            },
             {}
         }
     },

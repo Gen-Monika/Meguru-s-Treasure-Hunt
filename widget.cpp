@@ -797,7 +797,7 @@ void Widget::import_buttons()
         main_scene_button[i] = new SCButton(2,i);
     }
     music_button = new TButton(3,0);
-    retry_button = new ColoredButton(4,0);
+    retry_button = new SCButton(4,0);
     for(int i = 1;i<=10;++i){
         level_button[i] = new SCButton(5,i);
         connect(level_button[i], &SCButton::clicked, this, [this, i]() {
@@ -1000,6 +1000,9 @@ void Widget::return_title_button_Clicked(){
 }
 
 void Widget::retry_button_Clicked(){
+    retry_button->sound_clicked_player->stop();
+    retry_button->sound_clicked_player->play();
+    retry_button->setIcon(*retry_button->pic_normal);
     scene->removeItem(Meguru);
     scene->removeItem(Meguru->text_now_on);
     scene->removeItem(level_now_playing->text_of_cg);
@@ -1076,7 +1079,7 @@ void Widget::init_game()
 
     placeButton(retry_button,LayoutConfig::start_music_button_pos);
     scene->addWidget(retry_button);
-    connect(retry_button,&ColoredButton::clicked,this,&Widget::retry_button_Clicked);
+    connect(retry_button,&SCButton::clicked,this,&Widget::retry_button_Clicked);
 
     load_timer();
     connect(game_timer,&QTimer::timeout,this,&Widget::general_update);
