@@ -1169,6 +1169,7 @@ void Widget::Meguru_refresh()
     Meguru->setZValue(23);
     Meguru->digging = false;
     Meguru->statement = 0;
+    Meguru->face_left = false;
     Meguru->win = false;
 }
 

@@ -9,6 +9,7 @@
 #include <QFontMetricsF>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPainterPathStroker>
 #include <QPen>
 #include <QStringList>
 #include <QVector>
@@ -37,6 +38,7 @@ QFont dialogueFont(int pixelSize)
 {
     QFont font(dialogueFontFamily());
     font.setPixelSize(pixelSize);
+    font.setWeight(QFont::DemiBold);
     font.setHintingPreference(QFont::PreferNoHinting);
     return font;
 }
@@ -47,11 +49,13 @@ void drawOutlinedText(QPainter& painter,const QFont& font,
     QPainterPath path;
     path.addText(baseline,font,text);
 
-    QPen outline(text_outline_color);
-    outline.setWidthF(Default::dialogue_outline_width);
-    outline.setJoinStyle(Qt::RoundJoin);
+    QPainterPathStroker stroker;
+    stroker.setWidth(Default::dialogue_outline_width);
+    stroker.setJoinStyle(Qt::RoundJoin);
 
-    painter.setPen(outline);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(text_outline_color);
+    painter.drawPath(stroker.createStroke(path));
     painter.setBrush(text_fill_color);
     painter.drawPath(path);
 }
