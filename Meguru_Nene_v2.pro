@@ -13,6 +13,7 @@ SOURCES += \
     PathUtils.cpp \
     ResourceManager.cpp \
     SCButton.cpp \
+    SCCheckbox.cpp \
     TButton.cpp \
     level.cpp \
     main.cpp \
@@ -25,6 +26,7 @@ HEADERS += \
     PathUtils.h \
     ResourceManager.h \
     SCButton.h \
+    SCCheckbox.h \
     TButton.h \
     config.h \
     level.h \

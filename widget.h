@@ -33,8 +33,8 @@
 #include "config.h"
 #include "LayoutConfig.h"
 #include "ColoredButton.h"
-#include "TButton.h"
 #include "SCButton.h"
+#include "SCCheckbox.h"
 #include "meguru.h"
 #include "level.h"
 
@@ -111,7 +111,7 @@ public:
     //按钮
     SCButton* refresh_button = nullptr;
     SCButton* main_scene_button[Default::main_scene_button_count + 1];
-    TButton* music_button = nullptr;
+    SCCheckbox* music_button = nullptr;
     SCButton* retry_button = nullptr;
     SCButton* level_button[Default::level_button_count + 1];
     SCButton* select_scene_button[Default::select_scene_button_count + 1];

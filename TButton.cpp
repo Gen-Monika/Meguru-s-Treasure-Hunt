@@ -19,7 +19,10 @@ TButton::TButton(const QString& text, QWidget* parent)
 TButton::TButton(int i, int j)
 {
     setMouseTracking(true);
-    this->setFixedSize(Default::button_size[i]);
+    button_group = i;
+    button_variant = j;
+    const QSize size = Default::buttonSize(i,j);
+    this->setFixedSize(size);
     pic_white_on = ResourceManager::loadIcon(Default::file_of_button[i][j].t.pic_white_on);
     pic_white_off = ResourceManager::loadIcon(Default::file_of_button[i][j].t.pic_white_off);
     pic_black_on = ResourceManager::loadIcon(Default::file_of_button[i][j].t.pic_black_on);
@@ -27,7 +30,7 @@ TButton::TButton(int i, int j)
     this->setStyleSheet("QPushButton { background-color: transparent; border: none; }"
                         "QPushButton:hover { background-color: rgba(255,255,255,50); }");
     this->setIcon(*pic_black_off);
-    this->setIconSize(Default::button_size[i]);
+    this->setIconSize(size);
 }
 
 TButton::~TButton()
@@ -38,22 +41,22 @@ TButton::~TButton()
     delete pic_black_off;
 }
 
-void TButton::turn_to_white(int i)
+void TButton::turn_to_white()
 {
     if(is_white) return;
     if(is_on) this->setIcon(*pic_white_on);
     else this->setIcon(*pic_white_off);
-    this->setIconSize(Default::button_size[i]);
+    this->setIconSize(Default::buttonSize(button_group,button_variant));
     is_white = true;
     return;
 }
 
-void TButton::turn_to_black(int i)
+void TButton::turn_to_black()
 {
     if(!is_white) return;
     if(is_on) this->setIcon(*pic_black_on);
     else this->setIcon(*pic_black_off);
-    this->setIconSize(Default::button_size[i]);
+    this->setIconSize(Default::buttonSize(button_group,button_variant));
     is_white = false;
     return;
 }

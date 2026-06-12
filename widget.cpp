@@ -602,8 +602,8 @@ void Widget::turn_to_level(Level *level)
 
     arrangeLevelSceneButtons(false);
 
-    if(level->isdark) music_button->turn_to_white(Default::music_button);
-    else music_button->turn_to_black(Default::music_button);
+    if(level->isdark) music_button->turn_to_white();
+    else music_button->turn_to_black();
     if(music_on){
         delay_for(Default::fadein_time);
         fadein_music(music_now_playing,Default::fadein_time);
@@ -768,6 +768,7 @@ void Widget::mousePressEvent(QMouseEvent *event)
 
 void Widget::changeEvent(QEvent *event)
 {
+    Q_UNUSED(event);
     setFocus();
     return;
 }
@@ -798,7 +799,7 @@ void Widget::import_buttons()
     for(int i = 1;i<=Default::main_scene_button_count;++i){
         main_scene_button[i] = new SCButton(Default::main_scene_button,i);
     }
-    music_button = new TButton(Default::music_button,0);
+    music_button = new SCCheckbox(Default::music_button,0);
     retry_button = new SCButton(Default::retry_button,0);
     for(int i = 1;i<=Default::level_button_count;++i){
         level_button[i] = new SCButton(Default::level_button,i);
@@ -822,19 +823,13 @@ void Widget::music_button_Clicked()
 {
     if(music_on){
         music_on = false;
-        music_button->is_on = false;
-        if(!music_button->is_white) music_button->setIcon(*music_button->pic_black_off);
-        else music_button->setIcon(*music_button->pic_white_off);
-        music_button->setIconSize(Default::button_size[Default::music_button]);
+        music_button->setChecked(false);
         bgm_player->stop();
     }
     else{
         music_on = true;
-        music_button->is_on = true;
         fadein_music(music_now_playing,Default::fadein_time);
-        if(!music_button->is_white) music_button->setIcon(*music_button->pic_black_on);
-        else music_button->setIcon(*music_button->pic_white_on);
-        music_button->setIconSize(Default::button_size[Default::music_button]);
+        music_button->setChecked(true);
     }
     setFocus();
     return;
@@ -868,7 +863,7 @@ void Widget::select_button_Clicked()
     ui->bg->fitInView(select_scene->sceneRect(),Qt::KeepAspectRatio);//将摄像机的大小初始与舞台大小固定
     ui->bg->setScene(select_scene);
     arrangeSelectSceneButtons();
-    music_button->turn_to_black(Default::music_button);
+    music_button->turn_to_black();
     main_scene_button[Default::select_button]->setIcon(*main_scene_button[Default::select_button]->pic_normal);
     setFocus();
     return;
@@ -911,7 +906,7 @@ void Widget::select_in_level_button_Clicked(){
     ui->bg->fitInView(select_scene->sceneRect(),Qt::KeepAspectRatio);//将摄像机的大小初始与舞台大小固定
     ui->bg->setScene(select_scene);
     arrangeSelectSceneButtons();
-    music_button->turn_to_black(Default::music_button);
+    music_button->turn_to_black();
     setFocus();
     return;
 }
@@ -948,15 +943,18 @@ void Widget::return_prev_button_Clicked(){
         ui->bg->setScene(scene);
         pic_now_using = level_now_playing->cg_on ? level_now_playing->pic_of_cg : level_now_playing->pic_of_bg;
         arrangeLevelSceneButtons(level_now_playing->cg_on);
-        if(level_now_playing->isdark) music_button->turn_to_white(Default::music_button);
+        if(level_now_playing->isdark) music_button->turn_to_white();
         setFocus();
     }
     return;
 }
 
 void Widget::return_title_button_Clicked(){
-    select_scene_button[Default::return_title_button]->sound_clicked_player->stop();
-    select_scene_button[Default::return_title_button]->sound_clicked_player->play();
+    SCButton* sound_button = prev_scene == start_scene
+        ? select_scene_button[Default::return_prev_button]
+        : select_scene_button[Default::return_title_button];
+    sound_button->sound_clicked_player->stop();
+    sound_button->sound_clicked_player->play();
     select_scene_button[Default::return_title_button]->setIcon(*select_scene_button[Default::return_title_button]->pic_normal);
     if(prev_scene == start_scene){
         ui->bg->fitInView(start_scene->sceneRect(),Qt::KeepAspectRatio);//将摄像机的大小初始与舞台大小固定
@@ -965,7 +963,7 @@ void Widget::return_title_button_Clicked(){
         move_button(music_button,start_scene);
         pic_now_using = pic_bg_start;
         arrangeStartSceneButtons();
-        music_button->turn_to_black(Default::music_button);
+        music_button->turn_to_black();
         setFocus();
     }
     else if(prev_scene == scene){
@@ -985,7 +983,7 @@ void Widget::return_title_button_Clicked(){
         move_button(music_button,start_scene);
         pic_now_using = pic_bg_start;
         arrangeStartSceneButtons();
-        music_button->turn_to_black(Default::music_button);
+        music_button->turn_to_black();
         music_now_playing = bgm_bg_start;
         if(music_on){
             delay_for(Default::fadein_time);
@@ -1030,8 +1028,8 @@ void Widget::retry_button_Clicked(){
     scene->addItem(Meguru);
 
     arrangeLevelSceneButtons(false);
-    if(level->isdark) music_button->turn_to_white(Default::music_button);
-    else music_button->turn_to_black(Default::music_button);
+    if(level->isdark) music_button->turn_to_white();
+    else music_button->turn_to_black();
     if(music_on){
         delay_for(Default::fadein_time);
         fadein_music(music_now_playing,Default::fadein_time);
@@ -1104,7 +1102,7 @@ void Widget::init_game()
 
 
     start_scene->addWidget(music_button);
-    connect(music_button,&TButton::clicked,this,&Widget::music_button_Clicked);
+    connect(music_button,&SCCheckbox::clicked,this,&Widget::music_button_Clicked);
 
     placeButton(retry_button,LayoutConfig::start_music_button_pos);
     scene->addWidget(retry_button);

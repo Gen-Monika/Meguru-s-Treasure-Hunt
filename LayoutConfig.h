@@ -10,8 +10,15 @@ struct PositionRatio {
     double y;
 };
 
+inline double compactButtonCenterCompensation(const QSize &buttonSize)
+{
+    return (Default::compact_button_layout_slot_size.width() - buttonSize.width())
+        / 2.0 / Default::bg_size.width();
+}
+
 const PositionRatio start_refresh_button_pos = {1.0 / 128.0, 1.0 / 128.0};
 const PositionRatio start_music_button_pos = {1.0 / 8.0, 1.0 / 256.0};
+const double secondary_scene_music_button_top_lift = 0.25 / 128.0;
 
 const PositionRatio main_scene_button_pos[Default::main_scene_button_count + 1] = {
     {0.0, 0.0},
@@ -23,16 +30,49 @@ const PositionRatio main_scene_button_pos[Default::main_scene_button_count + 1] 
 };
 
 const PositionRatio select_refresh_button_pos = {111.0 / 128.0, 3.5 / 128.0};
-const PositionRatio select_music_button_pos = {106.0 / 128.0, 3.25 / 128.0};
-const PositionRatio select_return_title_button_pos = {96.0 / 128.0, 120.0 / 128.0};
-const PositionRatio select_return_prev_button_pos = {111.0 / 128.0, 120.0 / 128.0};
+const PositionRatio select_music_button_pos = {
+    106.0 / 128.0,
+    3.25 / 128.0 - secondary_scene_music_button_top_lift
+};
+const PositionRatio select_return_title_button_base_pos = {96.0 / 128.0, 120.0 / 128.0};
+const PositionRatio select_return_prev_button_base_pos = {111.0 / 128.0, 120.0 / 128.0};
+const double select_scene_button_center_compensation =
+    compactButtonCenterCompensation(Default::select_scene_navigation_button_size);
+const PositionRatio select_return_title_button_pos = {
+    select_return_title_button_base_pos.x + select_scene_button_center_compensation,
+    select_return_title_button_base_pos.y
+};
+const PositionRatio select_return_prev_button_pos = {
+    select_return_prev_button_base_pos.x + select_scene_button_center_compensation,
+    select_return_prev_button_base_pos.y
+};
 
-const PositionRatio level_return_title_button_pos = {95.0 / 128.0, 3.5 / 128.0};
-const PositionRatio level_select_button_pos = {80.0 / 128.0, 3.5 / 128.0};
+const PositionRatio level_return_title_button_base_pos = {95.0 / 128.0, 3.5 / 128.0};
+const PositionRatio level_return_title_button_pos = {
+    level_return_title_button_base_pos.x + select_scene_button_center_compensation,
+    level_return_title_button_base_pos.y
+};
+const PositionRatio level_select_button_base_pos = {80.0 / 128.0, 3.5 / 128.0};
+const double level_select_button_center_compensation =
+    compactButtonCenterCompensation(Default::select_in_level_button_size);
+const PositionRatio level_select_button_pos = {
+    level_select_button_base_pos.x + level_select_button_center_compensation,
+    level_select_button_base_pos.y
+};
 const PositionRatio level_refresh_button_pos = {111.0 / 128.0, 3.5 / 128.0};
-const PositionRatio level_music_button_pos = {76.0 / 128.0, 3.25 / 128.0};
-const PositionRatio level_retry_button_pos = {71.0 / 128.0, 3.25 / 128.0};
-const PositionRatio level_cg_retry_button_pos = {71.0 / 128.0, 3.5 / 128.0};
+const PositionRatio level_music_button_pos = {
+    76.0 / 128.0,
+    3.25 / 128.0 - secondary_scene_music_button_top_lift
+};
+const double level_retry_button_right_shift = 0.75 / 128.0;
+const PositionRatio level_retry_button_pos = {
+    71.0 / 128.0 + level_retry_button_right_shift,
+    3.25 / 128.0
+};
+const PositionRatio level_cg_retry_button_pos = {
+    71.0 / 128.0 + level_retry_button_right_shift,
+    3.5 / 128.0
+};
 
 const int level_button_page_size = 10;
 const int level_button_grid_columns = 3;

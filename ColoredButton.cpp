@@ -19,12 +19,13 @@ ColoredButton::ColoredButton(const QString& text, QWidget* parent)
 ColoredButton::ColoredButton(int i, int j)
 {
     setMouseTracking(true);
-    this->setFixedSize(Default::button_size[i]);
+    const QSize size = Default::buttonSize(i,j);
+    this->setFixedSize(size);
     pic = ResourceManager::loadIcon(Default::file_of_button[i][j].colored.pic);
     this->setStyleSheet("QPushButton { background-color: transparent; border: none; }"
                           "QPushButton:hover { background-color: rgba(255,255,255,50); }");
     this->setIcon(*pic);
-    this->setIconSize(Default::button_size[i]);
+    this->setIconSize(size);
 }
 
 ColoredButton::~ColoredButton()

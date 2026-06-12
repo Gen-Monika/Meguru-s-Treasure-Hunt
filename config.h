@@ -36,18 +36,29 @@ struct T{
     QString pic_black_off;
 };
 
-//SC类型按钮的文件路径
-struct SC{
+//SCButton类型按钮的文件路径
+struct SCB{
     QString pic_normal;
     QString pic_hovered;
     QString sound_hovered;
     QString sound_clicked;
 };
 
+//SCCheckbox类型按钮的文件路径
+struct SCC{
+    QString pic_normal_on;
+    QString pic_normal_off;
+    QString pic_hovered_on;
+    QString pic_hovered_off;
+    QString sound_hover;
+    QString sound_clicked;
+};
+
 struct File_of_button{
-    struct Colored colored;
-    struct SC sc;
-    struct T t;
+    struct Colored colored = {};
+    struct SCB scb = {};
+    struct T t = {};
+    struct SCC scc = {};
 };
 
 //游戏默认周期
@@ -150,19 +161,72 @@ const int select_in_level_button = 7;
 //按钮数组容量和常用按钮数量
 const int button_group_capacity = 10;
 const int button_variant_capacity = 11;
-const int main_scene_button_count = extra_button;
-const int level_button_count = tenshin;
-const int select_scene_button_count = return_title_button;
+const int main_scene_button_count = 5;//主界面按钮数量
+const int level_button_count = 10;//关卡按钮数量
+const int select_scene_button_count = 2;//选关界面按钮数量
+
+const int compact_button_height = 30;
+const QSize compact_button_layout_slot_size(144,compact_button_height);
+const QSize refresh_button_size = compact_button_layout_slot_size;
+const QSize main_scene_button_size(280,70);
+const QSize music_button_size(32,36);
+const QSize retry_button_size(30,30);
+const QSize level_button_size(412,132);
+
+const double select_scene_button_asset_width = 161.0;
+const double select_scene_button_asset_height = 37.0;
+const int select_scene_button_width = static_cast<int>(
+    compact_button_height * select_scene_button_asset_width / select_scene_button_asset_height + 0.5
+);
+const QSize select_scene_navigation_button_size(select_scene_button_width,compact_button_height);
+
+const double select_in_level_button_asset_width = 2080.0;
+const double select_in_level_button_asset_height = 510.0;
+const int select_in_level_button_width = static_cast<int>(
+    compact_button_height * select_in_level_button_asset_width / select_in_level_button_asset_height + 0.5
+);
+const QSize select_in_level_button_size(select_in_level_button_width,compact_button_height);
 
 //按钮的默认大小,这里用数组保存,下标对应键值
-const QSize button_size[button_group_capacity] = { QSize(0,0),QSize(144,30),QSize(280,70),QSize(20,34),QSize(30,30),QSize(412,132),QSize(144,30),QSize(144,30) };
+const bool button_size_is_variant_specific[button_group_capacity] = {
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+};
+
+const QSize button_size[button_group_capacity][button_variant_capacity] = {
+    { QSize(0,0) },
+    { refresh_button_size },
+    { main_scene_button_size },
+    { music_button_size },
+    { retry_button_size },
+    { level_button_size },
+    { select_scene_navigation_button_size },
+    { select_in_level_button_size }
+};
                                   //空白     //刷新        //主界面       //音乐开关    //游戏内重试   //选择每个关卡   //选关界面    //关卡进选关
+
+inline QSize buttonSize(int group,int variant = 0)
+{
+    if(group < 0 || group >= button_group_capacity
+        || variant < 0 || variant >= button_variant_capacity){
+        return QSize(0,0);
+    }
+    const int sizeIndex = button_size_is_variant_specific[group] ? variant : 0;
+    return button_size[group][sizeIndex];
+}
 
 //按钮类型的键值
 //0空着不用
 const int colored = 1;//ColoredButton
 const int sc = 2;//SCButton
 const int t = 3;//TButton
+const int scc = 4;//SCCheckbox
 
 //按钮的类型,同样用数组保存
 const int button_type[button_group_capacity][button_variant_capacity] =
@@ -170,7 +234,7 @@ const int button_type[button_group_capacity][button_variant_capacity] =
     {0},//0索引空着不用
     {2},//1：刷新按钮
     {0,2,2,2,2,2},//2：主界面按钮
-    {3},//3：音乐开关按钮
+    {4},//3：音乐开关按钮
     {2},//4：游戏内重试按钮
     {0,2,2,2,2,2,2,2,2,2,2},//5：选择每个关卡的按钮
     {0,2,2},//6：选关界面的按钮
@@ -189,14 +253,17 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
             {   ""  }, //colored
 
             //pic_normal  //pic_hovered  //sound_hovered   //sound_clicked
-            {       ""    ,       ""     ,        ""       ,        ""       }, //sc
+            {       ""    ,       ""     ,        ""       ,        ""       }, //scb
 
             //pic_white_on //pic_black_on  //pic_white_off   //pic_black_off
-            {     ""      ,       ""     ,       ""       ,        ""       } //t
+            {     ""      ,       ""     ,       ""       ,        ""       }, //t
+
+            //pic_normal_on //pic_normal_off //pic_hovered_on //pic_hovered_off //sound_hover //sound_clicked
+            {       ""      ,       ""       ,       ""       ,       ""        ,      ""     ,       ""      } //scc
         }
     },
 
-    // === 索引1：刷新按钮 (SC类型) ===
+    // === 索引1：刷新按钮 (SCB类型) ===
     {
         {    // refresh_button = 1
             {},
@@ -206,11 +273,12 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         }
     },
 
-    // === 索引2：主界面按钮 (SC类型) ===
+    // === 索引2：主界面按钮 (SCB类型) ===
     {
         {},  // 子索引0不用
         {    // guide_button = 1 - 新手教程按钮
@@ -221,6 +289,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // select_button = 2 - 选择关卡按钮
@@ -231,6 +300,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // exit_button = 3 - 退出游戏按钮
@@ -241,6 +311,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // system_button = 4 - 设置按钮
@@ -251,6 +322,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // extra_button = 5 - 额外内容按钮
@@ -261,25 +333,29 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         }
     },
 
-    // === 索引3：音乐开关按钮 (T类型) ===
+    // === 索引3：音乐开关按钮 (SCC类型) ===
     {
         {    // music_button = 3
             {},
             {},
+            {},
             {
-                "../../Resources/Pictures/Icon-s/Button-s/Music_White.png",
-                "../../Resources/Pictures/Icon-s/Button-s/Music.png",
-                "../../Resources/Pictures/Icon-s/Button-s/Music_White_no.png",
-                "../../Resources/Pictures/Icon-s/Button-s/Music_no.png"
+                "../../Resources/Pictures/Icon-s/Button-s/Music_Checkbox_On_Normal.png",
+                "../../Resources/Pictures/Icon-s/Button-s/Music_Checkbox_Off_Normal.png",
+                "../../Resources/Pictures/Icon-s/Button-s/Music_Checkbox_On_Hover.png",
+                "../../Resources/Pictures/Icon-s/Button-s/Music_Checkbox_Off_Hover.png",
+                "../../Resources/Audios/Sound-s/button_hovered.ogg",
+                "../../Resources/Audios/Sound-s/check_box_chosen.ogg"
             }
         }
     },
 
-    // === 索引4：游戏内重试按钮 (SC类型) ===
+    // === 索引4：游戏内重试按钮 (SCB类型) ===
     {
         {    // retry_button = 4
             {},
@@ -289,11 +365,12 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         }
     },
 
-    // === 索引5：选择关卡按钮 (SC类型) ===
+    // === 索引5：选择关卡按钮 (SCB类型) ===
     {
         {},  // 子索引0不用
         {    // senren_0 = 1
@@ -304,6 +381,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // senren_1 = 2
@@ -314,6 +392,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // sanoba_nene = 3
@@ -324,6 +403,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // sanoba_touko = 4
@@ -334,6 +414,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // cafe_0 = 5
@@ -344,6 +425,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // cafe_1 = 6
@@ -354,6 +436,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // rj = 7
@@ -364,6 +447,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // shinku = 8
@@ -374,6 +458,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // tenshi = 9
@@ -384,6 +469,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // tenshin = 10
@@ -394,11 +480,12 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         }
     },
 
-    // === 索引6：选关界面按钮 (SC类型) ===
+    // === 索引6：选关界面按钮 (SCB类型) ===
     {
         {},  // 子索引0不用
         {    // return_prev_button = 1 - 返回之前的画面按钮
@@ -409,6 +496,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/return_button_clicked.ogg"
             },
+            {},
             {}
         },
         {    // return_title_button = 2 - 返回标题界面按钮
@@ -419,11 +507,12 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         }
     },
 
-    // === 索引7：关卡内选关按钮 (SC类型) ===
+    // === 索引7：关卡内选关按钮 (SCB类型) ===
     {
         {    // select_in_level_button = 7
             {},
@@ -433,6 +522,7 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
                 "../../Resources/Audios/Sound-s/button_hovered.ogg",
                 "../../Resources/Audios/Sound-s/push_button_clicked.ogg"
             },
+            {},
             {}
         }
     }
