@@ -67,7 +67,7 @@ const PositionRatio level_music_button_pos = {
 const double level_retry_button_right_shift = 0.75 / 128.0;
 const PositionRatio level_retry_button_pos = {
     71.0 / 128.0 + level_retry_button_right_shift,
-    3.25 / 128.0
+    3.5 / 128.0
 };
 const PositionRatio level_cg_retry_button_pos = {
     71.0 / 128.0 + level_retry_button_right_shift,
