@@ -4,6 +4,7 @@
 #include <QSize>
 #include <QSizeF>
 #include <QString>
+#include <QList>
 
 namespace Default{
 
@@ -21,6 +22,37 @@ struct File_of_level{
     QString bgm_bg;
     QString bgm_cg;
     QString sound_text;
+};
+
+//一段对话的文本与语音配置
+struct DialogueLineConfig{
+    QString speaker;
+    QString text;
+    QString voice;
+};
+
+//剧情节点类型。Line表示普通台词,Choice表示选择支,End表示结束剧情。
+enum class StoryStepType{
+    Line,
+    Choice,
+    End
+};
+
+//选择支按钮配置。targetLabel用于跳转到指定剧情节点。
+struct StoryChoiceConfig{
+    QString text;
+    QString targetLabel;
+};
+
+//剧情节点配置。label用于被其它节点跳转,nextLabel为空时默认播放下一节点。
+struct StoryStepConfig{
+    QString label;
+    StoryStepType type = StoryStepType::Line;
+    QString speaker;
+    QString text;
+    QString voice;
+    QString nextLabel;
+    QList<StoryChoiceConfig> choices;
 };
 
 //Colored类型按钮的文件路径
@@ -76,6 +108,33 @@ const QSize cg_size(1280,720);
 const QSize Meguru_size(140,232);
 //对话框的默认大小
 const QSize text_size(1280,202);
+const QString dialogue_base_path = "../../Resources/Pictures/Icon-s/Button-s/非主菜单的按钮/对话框/dialog_base.png";
+const QString dialogue_font_path = "../../Resources/Fonts/Yozai-Regular.ttf";
+const QString dialogue_hide_sound_path = "../../Resources/Audios/Sound-s/story_choices_showed.ogg";
+const QString story_choice_normal_path = "../../Resources/Pictures/Icon-s/Button-s/Story_Choice_Normal.png";
+const QString story_choice_hovered_path = "../../Resources/Pictures/Icon-s/Button-s/Story_Choice_Hover.png";
+const QString story_choice_hover_sound_path = "../../Resources/Audios/Sound-s/button_hovered.ogg";
+const QString story_choice_clicked_sound_path = "../../Resources/Audios/Sound-s/story_choices_chosen.ogg";
+
+const int dialogue_quote_left = 302;
+const int dialogue_content_left = 345;
+const int dialogue_speaker_top = 14;
+const int dialogue_body_top = 62;
+const int dialogue_line_gap = 44;
+const int dialogue_right_edge = 1200;
+const int dialogue_speaker_font_px = 38;
+const int dialogue_body_font_px = 36;
+const double dialogue_outline_width = 1.5;
+const QSize story_choice_button_size(680,80);
+const int story_choice_button_gap = 24;
+const int story_choice_layout_top_margin = 24;
+const int story_choice_layout_bottom_margin = 28;
+const int story_choice_layout_y_offset = -18;
+const int story_choice_button_fadein_time = 220;
+const int story_choice_button_fadeout_time = 320;
+const int story_choice_button_font_px = 34;
+const int story_choice_text_y_offset = -3;
+const double story_choice_text_outline_width = 1.6;
 //洞的默认大小
 const QSize hole_size(90,52);
 
@@ -646,6 +705,76 @@ const File_of_level file_of_level[level_button_count + 1] = {
         "../../Resources/Audios/BGM-s/Tenshin_Ranman/Famishin,Angel Note - 茶味を武装る;.mp3",
         ""
     }
+};
+
+//挖宝提示对话
+const DialogueLineConfig dialogue_far_away = {
+    "巡",
+    "好像不在这边呢,去对面试试看?",
+    "../../Resources/Audios/Ciallo/Ciallo_Meguru_Pure.flac"
+};
+
+const DialogueLineConfig dialogue_far = {
+    "巡",
+    "应该是这边没有错,但好像还很远……\n再多走一走吧？",
+    "../../Resources/Audios/Ciallo/Ciallo_Meguru_Pure.flac"
+};
+
+const DialogueLineConfig dialogue_medium = {
+    "巡",
+    "距离已经不远了呢,放慢脚步吧。",
+    "../../Resources/Audios/Ciallo/Ciallo_Meguru_Pure.flac"
+};
+
+const DialogueLineConfig dialogue_near = {
+    "巡",
+    "已经很近了,再稍微仔细一点吧。",
+    "../../Resources/Audios/Ciallo/Ciallo_Meguru_Pure.flac"
+};
+
+const DialogueLineConfig dialogue_very_near = {
+    "巡",
+    "就在这附近！在旁边找一找！",
+    "../../Resources/Audios/Ciallo/Ciallo_Meguru_Pure.flac"
+};
+
+const DialogueLineConfig dialogue_thats_it = {
+    "巡",
+    "欸！？好像挖到了什么！",
+    "../../Resources/Audios/Voice-s/Meguru.flac"
+};
+
+const DialogueLineConfig dialogue_failed = {
+    "巡",
+    "铲子坏掉了呢……换一把新的再来吧。",
+    "../../Resources/Audios/Ciallo/Ciallo_Meguru_Pure.flac"
+};
+
+//CG界面对话。空列表表示该关卡暂无CG对话框。
+const QList<DialogueLineConfig> level_dialogue_lines[level_button_count + 1] = {
+    {},
+    {},
+    {},
+    {
+        {
+            "宁宁",
+            "那个，不对 啊哇，啊嘎嘎嘎——",
+            "../../Resources/Audios/Voice-s/Nene.flac"
+        }
+    },
+    {
+        {
+            "憧子",
+            "来，啊——嗯",
+            "../../Resources/Audios/Voice-s/Touko.flac"
+        }
+    },
+    {},
+    {},
+    {},
+    {},
+    {},
+    {}
 };
 
 //界面的键值

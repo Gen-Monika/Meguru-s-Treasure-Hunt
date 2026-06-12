@@ -20,7 +20,9 @@
 #include <QKeyEvent>
 #include <QSet>
 #include <QList>
+#include <QHash>
 #include <QPropertyAnimation>
+#include <QParallelAnimationGroup>
 #include <QGraphicsOpacityEffect>
 #include <QThread>
 #include <QRandomGenerator>
@@ -33,15 +35,19 @@
 #include "config.h"
 #include "LayoutConfig.h"
 #include "ColoredButton.h"
+#include "DialogueRenderer.h"
 #include "SCButton.h"
 #include "SCCheckbox.h"
+#include "SCWButton.h"
 #include "meguru.h"
 #include "level.h"
 
 //延迟下一步调用的函数
-#define delay_for(num) QEventLoop loop;\
+#define delay_for(num) do {\
+QEventLoop loop;\
 QTimer::singleShot(num, &loop, &QEventLoop::quit);\
-loop.exec();
+loop.exec();\
+} while(false)
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -54,6 +60,15 @@ class Widget : public QWidget
     Q_OBJECT
 
 public:
+    enum class DialogueSceneType{
+        None,
+        DigHint,
+        WinHint,
+        LoseHint,
+        CgStory,
+        PreGameStory
+    };
+
     Widget(QWidget *parent = nullptr);
     ~Widget();
 
@@ -130,6 +145,7 @@ public:
     QUrl* bgm_bg_start = nullptr;
 
     QUrl* music_now_playing = nullptr;//正在播放的音乐
+    int bgm_fade_generation = 0;
 
     //void move_button(SCButton* button,QGraphicsScene* scene);//移动按钮到新的场景
     //void move_button(TButton* button,QGraphicsScene* scene);//移动按钮到新的场景
@@ -215,6 +231,61 @@ private:
     void arrangeSelectSceneButtons();
     void arrangeLevelSceneButtons(bool showCg);
     void arrangeLevelButtons();
+
+    bool hasActiveDialogue() const;
+    void startDialogue(DialogueSceneType type,const QList<Default::DialogueLineConfig>& lines);
+    void showDialogueLine(int lineIndex,bool restartVoice);
+    void advanceDialogue();
+    void hideDialogue();
+    void restoreDialogue();
+    void finishDialogue();
+    void clearDialogue(bool stopVoice);
+    void clearDialogueItem();
+    void playDialogueVoice(const QString& voicePath);
+    void playDialogueHideSound();
+    void restoreMeguruAfterDigHint();
+    bool hasActiveStory() const;
+    bool hasPreGameStoryForLevel(Level* level) const;
+    bool isLevelSceneVisible() const;
+    bool isLevelControlLocked() const;
+    bool tryBeginUiTransition();
+    void endUiTransition();
+    void startStory(DialogueSceneType type,const QList<Default::StoryStepConfig>& steps);
+    void buildStoryLabelIndex();
+    void showStoryStep(int stepIndex,bool restartVoice);
+    void advanceStory();
+    void jumpToStoryLabel(const QString& label);
+    int nextStoryStepIndex(const Default::StoryStepConfig& step) const;
+    void showStoryChoices(const Default::StoryStepConfig& step);
+    void layoutStoryChoiceButtons();
+    int levelTopBarBottomForStoryChoices() const;
+    void fadeInStoryChoices();
+    void fadeOutStoryChoicesAndJump(const QString& targetLabel);
+    void clearStoryChoices();
+    void finishStory();
+    void startPreGameStoryForLevel(Level* level);
+    void stopStoryChoiceAnimation();
+
+    DialogueSceneType dialogue_type = DialogueSceneType::None;
+    QList<Default::DialogueLineConfig> dialogue_lines;
+    int dialogue_line_index = -1;
+    bool dialogue_hidden = false;
+    QGraphicsPixmapItem* dialogue_item = nullptr;
+    QMediaPlayer* dialogue_voice_player = nullptr;
+    QAudioOutput* dialogue_voice_output = nullptr;
+    QMediaPlayer* dialogue_hide_sound_player = nullptr;
+    QAudioOutput* dialogue_hide_sound_output = nullptr;
+    bool story_active = false;
+    QList<Default::StoryStepConfig> story_steps;
+    QHash<QString,int> story_label_to_index;
+    int story_step_index = -1;
+    bool story_choice_show_sound_played = false;
+    bool story_choice_transitioning = false;
+    bool story_start_pending = false;
+    bool ui_transition_locked = false;
+    QList<SCWButton*> story_choice_buttons;
+    QList<QGraphicsProxyWidget*> story_choice_proxies;
+    QParallelAnimationGroup* story_choice_animation = nullptr;
 
     Ui::Widget *ui;
 };

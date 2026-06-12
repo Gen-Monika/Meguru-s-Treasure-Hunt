@@ -10,10 +10,12 @@ CONFIG += c++17
 
 SOURCES += \
     ColoredButton.cpp \
+    DialogueRenderer.cpp \
     PathUtils.cpp \
     ResourceManager.cpp \
     SCButton.cpp \
     SCCheckbox.cpp \
+    SCWButton.cpp \
     TButton.cpp \
     level.cpp \
     main.cpp \
@@ -22,11 +24,14 @@ SOURCES += \
 
 HEADERS += \
     ColoredButton.h \
+    DialogueRenderer.h \
     LayoutConfig.h \
     PathUtils.h \
     ResourceManager.h \
     SCButton.h \
     SCCheckbox.h \
+    SCWButton.h \
+    StoryConfig.h \
     TButton.h \
     config.h \
     level.h \
