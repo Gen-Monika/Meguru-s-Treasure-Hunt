@@ -1623,6 +1623,7 @@ void Widget::keyPressEvent(QKeyEvent *event)
         }
         if(Meguru) Meguru_dig();
         break;
+    case Qt::Key_Return:
     case Qt::Key_Enter:
         if(isLevelControlLocked()){
             break;
