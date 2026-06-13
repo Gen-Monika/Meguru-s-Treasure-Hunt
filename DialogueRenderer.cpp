@@ -11,6 +11,7 @@
 #include <QPainterPath>
 #include <QPainterPathStroker>
 #include <QPen>
+#include <QPoint>
 #include <QStringList>
 #include <QVector>
 
@@ -43,6 +44,23 @@ QFont dialogueFont(int pixelSize)
     return font;
 }
 
+QString normalizedDialogueText(const QString& text)
+{
+    QString normalizedText = text;
+    normalizedText.replace(QStringLiteral("\r\n"),QStringLiteral("\n"));
+    normalizedText.replace(QChar('\r'),QChar('\n'));
+    return normalizedText;
+}
+
+QString visibleDialogueText(const QString& text,int visibleCharacters)
+{
+    const QString normalizedText = normalizedDialogueText(text);
+    if(visibleCharacters < 0 || visibleCharacters >= normalizedText.size()){
+        return normalizedText;
+    }
+    return normalizedText.left(visibleCharacters);
+}
+
 void drawOutlinedText(QPainter& painter,const QFont& font,
                       const QPointF& baseline,const QString& text)
 {
@@ -60,16 +78,31 @@ void drawOutlinedText(QPainter& painter,const QFont& font,
     painter.drawPath(path);
 }
 
-double contentWidthForLine(int lineIndex,const QFontMetricsF& metrics)
+double contentLeftForLine(int lineIndex,bool quoted)
 {
-    const double left = lineIndex == 0
-        ? Default::dialogue_quote_left + metrics.horizontalAdvance(QStringLiteral("「 "))
+    if(!quoted){
+        return Default::dialogue_quote_left;
+    }
+
+    return lineIndex == 0
+        ? Default::dialogue_quote_left
         : Default::dialogue_content_left;
+}
+
+double contentWidthForLine(int lineIndex,const QFontMetricsF& metrics,bool quoted)
+{
+    const double left = quoted && lineIndex == 0
+        ? Default::dialogue_quote_left + metrics.horizontalAdvance(QStringLiteral("「 "))
+        : contentLeftForLine(lineIndex,quoted);
     return Default::dialogue_right_edge - left;
 }
 
-void ensureClosingQuoteFits(QVector<QString>& lines,const QFontMetricsF& metrics)
+void ensureClosingQuoteFits(QVector<QString>& lines,const QFontMetricsF& metrics,bool quoted)
 {
+    if(!quoted){
+        return;
+    }
+
     if(lines.isEmpty()){
         lines.append(QString());
     }
@@ -77,13 +110,13 @@ void ensureClosingQuoteFits(QVector<QString>& lines,const QFontMetricsF& metrics
     while(true){
         const int lastIndex = lines.size() - 1;
         const double width = metrics.horizontalAdvance(lines[lastIndex] + QStringLiteral(" 」"));
-        if(width <= contentWidthForLine(lastIndex,metrics) || lines[lastIndex].isEmpty()){
+        if(width <= contentWidthForLine(lastIndex,metrics,quoted) || lines[lastIndex].isEmpty()){
             return;
         }
 
         QString last = lines.takeLast();
         QString carry;
-        const double availableWidth = contentWidthForLine(lines.size(),metrics);
+        const double availableWidth = contentWidthForLine(lines.size(),metrics,quoted);
         while(!last.isEmpty()
                && metrics.horizontalAdvance(last + QStringLiteral(" 」")) > availableWidth){
             carry.prepend(last.at(last.size() - 1));
@@ -96,13 +129,11 @@ void ensureClosingQuoteFits(QVector<QString>& lines,const QFontMetricsF& metrics
     }
 }
 
-QVector<QString> wrapBodyText(const QString& text,const QFontMetricsF& metrics)
+QVector<QString> wrapBodyText(const QString& text,const QFontMetricsF& metrics,bool quoted)
 {
     QVector<QString> lines;
     QString currentLine;
-    QString normalizedText = text;
-    normalizedText.replace(QStringLiteral("\r\n"),QStringLiteral("\n"));
-    normalizedText.replace(QChar('\r'),QChar('\n'));
+    const QString normalizedText = normalizedDialogueText(text);
 
     const QStringList paragraphs = normalizedText.split(QChar('\n'));
     for(int paragraphIndex = 0; paragraphIndex < paragraphs.size(); ++paragraphIndex){
@@ -116,7 +147,7 @@ QVector<QString> wrapBodyText(const QString& text,const QFontMetricsF& metrics)
             const QString candidate = currentLine + character;
             const int lineIndex = lines.size();
             if(!currentLine.isEmpty()
-                && metrics.horizontalAdvance(candidate) > contentWidthForLine(lineIndex,metrics)){
+                && metrics.horizontalAdvance(candidate) > contentWidthForLine(lineIndex,metrics,quoted)){
                 lines.append(currentLine);
                 currentLine = QString(character);
             }
@@ -127,7 +158,7 @@ QVector<QString> wrapBodyText(const QString& text,const QFontMetricsF& metrics)
     }
 
     lines.append(currentLine);
-    ensureClosingQuoteFits(lines,metrics);
+    ensureClosingQuoteFits(lines,metrics,quoted);
     return lines;
 }
 
@@ -139,6 +170,13 @@ QPixmap DialogueRenderer::makeDialoguePixmap(const Default::DialogueLineConfig& 
 }
 
 QPixmap DialogueRenderer::makeDialoguePixmap(const QString& speaker,const QString& text)
+{
+    return makeDialoguePixmap(speaker,text,-1);
+}
+
+QPixmap DialogueRenderer::makeDialoguePixmap(const QString& speaker,
+                                             const QString& text,
+                                             int visibleCharacters)
 {
     QPixmap pixmap(PathUtils::resourcePath(Default::dialogue_base_path));
     if(pixmap.isNull()){
@@ -159,30 +197,60 @@ QPixmap DialogueRenderer::makeDialoguePixmap(const QString& speaker,const QStrin
     const QFontMetricsF speakerMetrics(speakerFont);
     const QFontMetricsF bodyMetrics(bodyFont);
 
-    const QPointF speakerBaseline(
-        Default::dialogue_quote_left,
-        Default::dialogue_speaker_top + speakerMetrics.ascent());
-    drawOutlinedText(
-        painter,
-        speakerFont,
-        speakerBaseline,
-        QStringLiteral("【 ") + speaker + QStringLiteral(" 】"));
+    const QString trimmedSpeaker = speaker.trimmed();
+    const bool quoted = !trimmedSpeaker.isEmpty();
+    if(quoted){
+        const QPointF speakerBaseline(
+            Default::dialogue_quote_left,
+            Default::dialogue_speaker_top + speakerMetrics.ascent());
+        drawOutlinedText(
+            painter,
+            speakerFont,
+            speakerBaseline,
+            QStringLiteral("【 ") + trimmedSpeaker + QStringLiteral(" 】"));
+    }
 
-    const QVector<QString> bodyLines = wrapBodyText(text,bodyMetrics);
+    const QString bodyText = visibleDialogueText(text,visibleCharacters);
+    const bool complete = visibleCharacters < 0
+        || visibleCharacters >= dialogueTextLength(text);
+    const QVector<QString> bodyLines = wrapBodyText(bodyText,bodyMetrics,quoted);
     for(int i = 0; i < bodyLines.size(); ++i){
         QString line = bodyLines[i];
-        if(i == 0){
+        if(quoted && i == 0){
             line.prepend(QStringLiteral("「 "));
         }
-        if(i == bodyLines.size() - 1){
+        if(quoted && complete && i == bodyLines.size() - 1){
             line.append(QStringLiteral(" 」"));
         }
 
         const QPointF baseline(
-            i == 0 ? Default::dialogue_quote_left : Default::dialogue_content_left,
+            contentLeftForLine(i,quoted),
             Default::dialogue_body_top + Default::dialogue_line_gap * i + bodyMetrics.ascent());
         drawOutlinedText(painter,bodyFont,baseline,line);
     }
 
     return pixmap;
+}
+
+int DialogueRenderer::dialogueTextLength(const QString& text)
+{
+    return normalizedDialogueText(text).size();
+}
+
+QPoint DialogueRenderer::voiceReplayButtonPos(const QString& speaker,const QSize& buttonSize)
+{
+    const QFont speakerFont = dialogueFont(Default::dialogue_speaker_font_px);
+    const QFontMetricsF speakerMetrics(speakerFont);
+    const QString trimmedSpeaker = speaker.trimmed();
+    const QString speakerText = trimmedSpeaker.isEmpty()
+        ? QString()
+        : QStringLiteral("【 ") + trimmedSpeaker + QStringLiteral(" 】");
+    const int x = Default::dialogue_quote_left
+        + static_cast<int>(speakerMetrics.horizontalAdvance(speakerText) + 0.5)
+        + Default::dialogue_voice_replay_button_gap;
+    const int y = Default::bg_size.height()
+        - Default::text_size.height()
+        + Default::dialogue_speaker_top
+        + static_cast<int>((speakerMetrics.height() - buttonSize.height()) / 2.0 + 0.5);
+    return QPoint(x,y);
 }

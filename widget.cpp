@@ -34,6 +34,7 @@ Widget::~Widget()
 
     delete bgm_player;//用来播放bgm
     delete bgm_output;//bgm输出端
+    delete dialogue_text_scroll_timer;
     delete dialogue_voice_player;
     delete dialogue_voice_output;
     delete dialogue_hide_sound_player;
@@ -56,6 +57,7 @@ Widget::~Widget()
     }
     delete music_button;
     delete retry_button;
+    delete voice_replay_button;
     for(int i = 1;i<=Default::level_button_count;++i){
         delete level_button[i];
     }
@@ -159,17 +161,27 @@ void Widget::showDialogueLine(int lineIndex,bool restartVoice)
     clearDialogueItem();
     dialogue_line_index = lineIndex;
     dialogue_hidden = false;
+    current_dialogue_speaker = dialogue_lines[dialogue_line_index].speaker;
+    current_dialogue_text = dialogue_lines[dialogue_line_index].text;
+    current_dialogue_voice = dialogue_lines[dialogue_line_index].voice;
+    dialogue_visible_characters = 0;
+    dialogue_total_characters = DialogueRenderer::dialogueTextLength(current_dialogue_text);
 
     dialogue_item = new QGraphicsPixmapItem(
-        DialogueRenderer::makeDialoguePixmap(dialogue_lines[dialogue_line_index]));
+        DialogueRenderer::makeDialoguePixmap(
+            current_dialogue_speaker,
+            current_dialogue_text,
+            dialogue_visible_characters));
     dialogue_item->setPos(0,Default::bg_size.height() - Default::text_size.height());
     dialogue_item->setZValue(25);
     if(scene != nullptr){
         scene->addItem(dialogue_item);
     }
+    updateVoiceReplayButton();
+    startDialogueTextScroll();
 
     if(restartVoice){
-        playDialogueVoice(dialogue_lines[dialogue_line_index].voice);
+        playDialogueVoice(current_dialogue_voice);
     }
 }
 
@@ -210,6 +222,7 @@ void Widget::hideDialogue()
             button->hide();
         }
     }
+    hideVoiceReplayButton();
     playDialogueHideSound();
 }
 
@@ -234,6 +247,7 @@ void Widget::restoreDialogue()
             button->refreshHoverState(false);
         }
     }
+    updateVoiceReplayButton();
 }
 
 void Widget::finishDialogue()
@@ -250,6 +264,7 @@ void Widget::clearDialogue(bool stopVoice)
     clearStoryChoices();
     story_active = false;
     story_start_pending = false;
+    story_module_id.clear();
     story_steps.clear();
     story_label_to_index.clear();
     story_step_index = -1;
@@ -258,6 +273,11 @@ void Widget::clearDialogue(bool stopVoice)
     dialogue_lines.clear();
     dialogue_line_index = -1;
     dialogue_hidden = false;
+    current_dialogue_speaker.clear();
+    current_dialogue_text.clear();
+    current_dialogue_voice.clear();
+    dialogue_visible_characters = 0;
+    dialogue_total_characters = 0;
     dialogue_type = DialogueSceneType::None;
     if(stopVoice && dialogue_voice_player != nullptr){
         dialogue_voice_player->stop();
@@ -266,6 +286,8 @@ void Widget::clearDialogue(bool stopVoice)
 
 void Widget::clearDialogueItem()
 {
+    stopDialogueTextScroll();
+    hideVoiceReplayButton();
     if(dialogue_item == nullptr){
         return;
     }
@@ -283,6 +305,7 @@ void Widget::playDialogueVoice(const QString& voicePath)
         return;
     }
 
+    current_dialogue_voice = voicePath;
     dialogue_voice_player->stop();
     if(voicePath.isEmpty()){
         return;
@@ -295,6 +318,121 @@ void Widget::playDialogueVoice(const QString& voicePath)
     dialogue_voice_player->setLoops(QMediaPlayer::Once);
     dialogue_voice_player->setSource(voiceUrl);
     dialogue_voice_player->play();
+}
+
+void Widget::replayDialogueVoice()
+{
+    if(current_dialogue_voice.isEmpty()){
+        setFocus();
+        return;
+    }
+
+    playDialogueVoice(current_dialogue_voice);
+    setFocus();
+}
+
+void Widget::renderCurrentDialogueText()
+{
+    if(dialogue_item == nullptr){
+        return;
+    }
+
+    dialogue_item->setPixmap(DialogueRenderer::makeDialoguePixmap(
+        current_dialogue_speaker,
+        current_dialogue_text,
+        dialogue_visible_characters));
+}
+
+void Widget::startDialogueTextScroll()
+{
+    stopDialogueTextScroll();
+    if(dialogue_total_characters <= 0){
+        dialogue_visible_characters = 0;
+        renderCurrentDialogueText();
+        return;
+    }
+
+    if(dialogue_text_scroll_timer == nullptr){
+        dialogue_text_scroll_timer = new QTimer(this);
+        connect(dialogue_text_scroll_timer,&QTimer::timeout,this,[this]() {
+            dialogue_visible_characters += Default::dialogue_text_scroll_chars_per_tick;
+            if(dialogue_visible_characters >= dialogue_total_characters){
+                dialogue_visible_characters = dialogue_total_characters;
+                stopDialogueTextScroll();
+            }
+            renderCurrentDialogueText();
+        });
+    }
+
+    dialogue_text_scroll_timer->setInterval(Default::dialogue_text_scroll_interval);
+    dialogue_text_scroll_timer->start();
+}
+
+void Widget::stopDialogueTextScroll()
+{
+    if(dialogue_text_scroll_timer != nullptr){
+        dialogue_text_scroll_timer->stop();
+    }
+}
+
+bool Widget::finishDialogueTextScroll()
+{
+    if(dialogue_visible_characters >= dialogue_total_characters){
+        return false;
+    }
+
+    dialogue_visible_characters = dialogue_total_characters;
+    stopDialogueTextScroll();
+    renderCurrentDialogueText();
+    return true;
+}
+
+void Widget::updateVoiceReplayButton()
+{
+    if(voice_replay_button == nullptr){
+        return;
+    }
+
+    const bool shouldShow = hasActiveDialogue()
+        && hasActiveStory()
+        && !dialogue_hidden
+        && isLevelSceneVisible()
+        && !current_dialogue_voice.isEmpty();
+    if(!shouldShow){
+        hideVoiceReplayButton();
+        return;
+    }
+
+    voice_replay_button->move(DialogueRenderer::voiceReplayButtonPos(
+        current_dialogue_speaker,
+        voice_replay_button->size()));
+    voice_replay_button->show();
+    voice_replay_button->raise();
+    if(QGraphicsProxyWidget* proxy = voice_replay_button->graphicsProxyWidget()){
+        proxy->setZValue(32);
+    }
+}
+
+void Widget::hideVoiceReplayButton()
+{
+    if(voice_replay_button != nullptr){
+        voice_replay_button->button_hoverLeave();
+        voice_replay_button->hide();
+    }
+}
+
+void Widget::advanceCurrentDialogueByInput()
+{
+    if(finishDialogueTextScroll()){
+        return;
+    }
+
+    if(hasActiveStory()){
+        advanceStory();
+    }
+    else if(hasActiveDialogue()){
+        advanceDialogue();
+    }
 }
 
 void Widget::playDialogueHideSound()
@@ -336,10 +474,12 @@ bool Widget::hasActiveStory() const
 
 bool Widget::hasPreGameStoryForLevel(Level* level) const
 {
-    return level != nullptr
-        && level->index >= 0
-        && level->index <= Default::level_button_count
-        && !StoryConfig::level_pre_game_story_steps[level->index].isEmpty();
+    if(level == nullptr){
+        return false;
+    }
+
+    const QString moduleId = StoryConfig::preGameStoryModuleForLevel(level->index);
+    return !moduleId.isEmpty() && !StoryConfig::storySteps(moduleId).isEmpty();
 }
 
 bool Widget::isLevelSceneVisible() const
@@ -376,23 +516,45 @@ void Widget::endUiTransition()
     setFocus();
 }
 
-void Widget::startStory(DialogueSceneType type,const QList<Default::StoryStepConfig>& steps)
+void Widget::startStory(DialogueSceneType type,const QString& moduleId,const QString& startLabel)
+{
+    startStory(type,moduleId,StoryConfig::storySteps(moduleId),startLabel);
+}
+
+void Widget::startStory(DialogueSceneType type,
+                        const QString& moduleId,
+                        const QList<Default::StoryStepConfig>& steps,
+                        const QString& startLabel)
 {
     clearDialogue(true);
     if(steps.isEmpty()){
+        if(!moduleId.isEmpty()){
+            qWarning() << "Missing story module:" << moduleId;
+        }
         return;
     }
 
     move_set.clear();
     story_start_pending = false;
     story_active = true;
+    story_module_id = moduleId;
     story_steps = steps;
     story_step_index = -1;
     story_choice_show_sound_played = false;
     story_choice_transitioning = false;
     dialogue_type = type;
     buildStoryLabelIndex();
-    showStoryStep(0,true);
+    if(startLabel.isEmpty()){
+        showStoryStep(0,true);
+        return;
+    }
+
+    if(!story_label_to_index.contains(startLabel)){
+        qWarning() << "Missing story start label:" << moduleId << startLabel;
+        finishStory();
+        return;
+    }
+    showStoryStep(story_label_to_index.value(startLabel),true);
 }
 
 void Widget::buildStoryLabelIndex()
@@ -426,16 +588,27 @@ void Widget::showStoryStep(int stepIndex,bool restartVoice)
         return;
     }
 
+    current_dialogue_speaker = step.speaker;
+    current_dialogue_text = step.text;
+    current_dialogue_voice = step.voice;
+    dialogue_visible_characters = 0;
+    dialogue_total_characters = DialogueRenderer::dialogueTextLength(current_dialogue_text);
+
     dialogue_item = new QGraphicsPixmapItem(
-        DialogueRenderer::makeDialoguePixmap(step.speaker,step.text));
+        DialogueRenderer::makeDialoguePixmap(
+            current_dialogue_speaker,
+            current_dialogue_text,
+            dialogue_visible_characters));
     dialogue_item->setPos(0,Default::bg_size.height() - Default::text_size.height());
     dialogue_item->setZValue(25);
     if(scene != nullptr){
         scene->addItem(dialogue_item);
     }
+    updateVoiceReplayButton();
+    startDialogueTextScroll();
 
     if(restartVoice){
-        playDialogueVoice(step.voice);
+        playDialogueVoice(current_dialogue_voice);
     }
 
     if(step.type == Default::StoryStepType::Choice){
@@ -462,43 +635,79 @@ void Widget::advanceStory()
         return;
     }
 
+    if(!step.nextLabel.isEmpty()){
+        jumpToStoryLabel(step.nextLabel);
+        return;
+    }
+
     const int nextIndex = nextStoryStepIndex(step);
     if(nextIndex < 0){
+        if(dialogue_type == DialogueSceneType::CgStory){
+            return;
+        }
         finishStory();
         return;
     }
     showStoryStep(nextIndex,true);
 }
 
-void Widget::jumpToStoryLabel(const QString& label)
+void Widget::jumpToStoryLabel(const QString& targetRef)
 {
     if(!story_active){
         return;
     }
 
-    if(label.isEmpty()){
+    if(targetRef.isEmpty()){
         advanceStory();
         return;
     }
 
+    QString moduleId;
+    QString label;
+    parseStoryTarget(targetRef,moduleId,label);
+    if(label.isEmpty()){
+        if(moduleId != story_module_id){
+            startStory(dialogue_type,moduleId);
+        }
+        else{
+            advanceStory();
+        }
+        return;
+    }
+
+    if(moduleId != story_module_id){
+        startStory(dialogue_type,moduleId,label);
+        return;
+    }
+
     if(!story_label_to_index.contains(label)){
-        qWarning() << "Missing story label:" << label;
+        qWarning() << "Missing story label:" << targetRef;
         finishStory();
         return;
     }
     showStoryStep(story_label_to_index.value(label),true);
 }
 
-int Widget::nextStoryStepIndex(const Default::StoryStepConfig& step) const
+void Widget::parseStoryTarget(const QString& targetRef,QString& moduleId,QString& label) const
 {
-    if(!step.nextLabel.isEmpty()){
-        if(story_label_to_index.contains(step.nextLabel)){
-            return story_label_to_index.value(step.nextLabel);
-        }
-        qWarning() << "Missing story nextLabel:" << step.nextLabel;
-        return -1;
+    moduleId = story_module_id;
+    label = targetRef.trimmed();
+
+    const int separatorIndex = label.indexOf(QChar(':'));
+    if(separatorIndex < 0){
+        return;
     }
 
+    const QString parsedModuleId = label.left(separatorIndex).trimmed();
+    label = label.mid(separatorIndex + 1).trimmed();
+    if(!parsedModuleId.isEmpty()){
+        moduleId = parsedModuleId;
+    }
+}
+
+int Widget::nextStoryStepIndex(const Default::StoryStepConfig& step) const
+{
+    Q_UNUSED(step);
     const int nextIndex = story_step_index + 1;
     return nextIndex < story_steps.size() ? nextIndex : -1;
 }
@@ -732,14 +941,18 @@ void Widget::finishStory()
 
 void Widget::startPreGameStoryForLevel(Level* level)
 {
-    if(!hasPreGameStoryForLevel(level)){
+    if(level == nullptr){
         story_start_pending = false;
         return;
     }
 
-    startStory(
-        DialogueSceneType::PreGameStory,
-        StoryConfig::level_pre_game_story_steps[level->index]);
+    const QString moduleId = StoryConfig::preGameStoryModuleForLevel(level->index);
+    if(moduleId.isEmpty() || StoryConfig::storySteps(moduleId).isEmpty()){
+        story_start_pending = false;
+        return;
+    }
+
+    startStory(DialogueSceneType::PreGameStory,moduleId);
 }
 
 void Widget::stopStoryChoiceAnimation()
@@ -1376,9 +1589,9 @@ void Widget::show_cg(Level *level)
         delay_for(Default::fadein_time);
         fadein_music(music_now_playing,Default::fadein_time);
     }
-    if(level->index >= 0 && level->index <= Default::level_button_count
-        && !Default::level_dialogue_lines[level->index].isEmpty()){
-        startDialogue(DialogueSceneType::CgStory,Default::level_dialogue_lines[level->index]);
+    const QString cgStoryModule = StoryConfig::cgStoryModuleForLevel(level->index);
+    if(!cgStoryModule.isEmpty() && !StoryConfig::storySteps(cgStoryModule).isEmpty()){
+        startStory(DialogueSceneType::CgStory,cgStoryModule);
     }
     return;
 }
@@ -1466,7 +1679,7 @@ void Widget::mousePressEvent(QMouseEvent *event)
             restoreDialogue();
         }
         else{
-            advanceStory();
+            advanceCurrentDialogueByInput();
         }
         setFocus();
         return;
@@ -1477,7 +1690,7 @@ void Widget::mousePressEvent(QMouseEvent *event)
             restoreDialogue();
         }
         else{
-            advanceDialogue();
+            advanceCurrentDialogueByInput();
         }
         setFocus();
         return;
@@ -1485,6 +1698,40 @@ void Widget::mousePressEvent(QMouseEvent *event)
 
     setFocus();
     return;
+}
+
+void Widget::wheelEvent(QWheelEvent* event)
+{
+    if(event->angleDelta().y() >= 0){
+        QWidget::wheelEvent(event);
+        return;
+    }
+
+    if(ui_transition_locked || story_choice_transitioning){
+        setFocus();
+        event->accept();
+        return;
+    }
+
+    if((hasActiveStory() || hasActiveDialogue()) && !isLevelSceneVisible()){
+        setFocus();
+        event->accept();
+        return;
+    }
+
+    if(hasActiveStory() || hasActiveDialogue()){
+        if(dialogue_hidden){
+            restoreDialogue();
+        }
+        else{
+            advanceCurrentDialogueByInput();
+        }
+        setFocus();
+        event->accept();
+        return;
+    }
+
+    QWidget::wheelEvent(event);
 }
 
 void Widget::changeEvent(QEvent *event)
@@ -1522,6 +1769,7 @@ void Widget::import_buttons()
     }
     music_button = new SCCheckbox(Default::music_button,0);
     retry_button = new SCButton(Default::retry_button,0);
+    voice_replay_button = new SCButton(Default::voice_replay_button,0);
     for(int i = 1;i<=Default::level_button_count;++i){
         level_button[i] = new SCButton(Default::level_button,i);
         connect(level_button[i], &SCButton::clicked, this, [this, i]() {
@@ -1891,6 +2139,13 @@ void Widget::init_game()
     placeButton(retry_button,LayoutConfig::start_music_button_pos);
     scene->addWidget(retry_button);
     connect(retry_button,&SCButton::clicked,this,&Widget::retry_button_Clicked);
+
+    scene->addWidget(voice_replay_button);
+    voice_replay_button->hide();
+    if(QGraphicsProxyWidget* proxy = voice_replay_button->graphicsProxyWidget()){
+        proxy->setZValue(32);
+    }
+    connect(voice_replay_button,&SCButton::clicked,this,&Widget::replayDialogueVoice);
 
     load_timer();
     connect(game_timer,&QTimer::timeout,this,&Widget::general_update);

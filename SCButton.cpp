@@ -3,6 +3,20 @@
 
 namespace {
 constexpr qint64 hover_sound_cooldown_ms = 80;
+
+QIcon* loadScaledButtonIcon(const QString& relativePath,const QSize& size)
+{
+    QPixmap* pixmap = ResourceManager::loadPixmap(relativePath);
+    QIcon* icon = nullptr;
+    if(pixmap != nullptr && !pixmap->isNull() && !size.isEmpty()){
+        icon = new QIcon(pixmap->scaled(size,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+    }
+    else{
+        icon = new QIcon();
+    }
+    delete pixmap;
+    return icon;
+}
 }
 
 SCButton::SCButton()
@@ -29,9 +43,9 @@ SCButton::SCButton(int i, int j)
     setAttribute(Qt::WA_Hover, true);
     const QSize size = Default::buttonSize(i,j);
     this->setFixedSize(size);
-    pic_normal = ResourceManager::loadIcon(Default::file_of_button[i][j].scb.pic_normal);
-    pic_hovered = ResourceManager::loadIcon(Default::file_of_button[i][j].scb.pic_hovered);
-    this->setStyleSheet("QPushButton { background-color: transparent; border: none; }"
+    pic_normal = loadScaledButtonIcon(Default::file_of_button[i][j].scb.pic_normal,size);
+    pic_hovered = loadScaledButtonIcon(Default::file_of_button[i][j].scb.pic_hovered,size);
+    this->setStyleSheet("QPushButton { background-color: transparent; border: none; padding: 0px; margin: 0px; }"
                         "QPushButton:hover { background-color: rgba(255,255,255,50); }");
     this->setIcon(*pic_normal);
     this->setIconSize(size);

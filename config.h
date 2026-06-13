@@ -38,13 +38,14 @@ enum class StoryStepType{
     End
 };
 
-//选择支按钮配置。targetLabel用于跳转到指定剧情节点。
+//选择支按钮配置。targetLabel可写成"label"或"module:label"。
 struct StoryChoiceConfig{
     QString text;
     QString targetLabel;
 };
 
 //剧情节点配置。label用于被其它节点跳转,nextLabel为空时默认播放下一节点。
+//nextLabel可写成"label"或"module:label",不带module时默认跳转当前剧情模块。
 struct StoryStepConfig{
     QString label;
     StoryStepType type = StoryStepType::Line;
@@ -125,6 +126,9 @@ const int dialogue_right_edge = 1200;
 const int dialogue_speaker_font_px = 38;
 const int dialogue_body_font_px = 36;
 const double dialogue_outline_width = 1.5;
+const int dialogue_text_scroll_interval = 24;
+const int dialogue_text_scroll_chars_per_tick = 1;
+const int dialogue_voice_replay_button_gap = 10;
 const QSize story_choice_button_size(680,80);
 const int story_choice_button_gap = 24;
 const int story_choice_layout_top_margin = 24;
@@ -216,6 +220,8 @@ const int select_scene_button = 6;
 
 //关卡内进入选关界面的按钮
 const int select_in_level_button = 7;
+//对话语音回放按钮
+const int voice_replay_button = 8;
 
 //按钮数组容量和常用按钮数量
 const int button_group_capacity = 10;
@@ -230,6 +236,13 @@ const QSize refresh_button_size = compact_button_layout_slot_size;
 const QSize main_scene_button_size(280,70);
 const QSize music_button_size(32,36);
 const QSize retry_button_size(30,30);
+const double voice_replay_button_asset_width = 27.0;
+const double voice_replay_button_asset_height = 28.0;
+const int voice_replay_button_height = dialogue_speaker_font_px;
+const int voice_replay_button_width = static_cast<int>(
+    voice_replay_button_height * voice_replay_button_asset_width / voice_replay_button_asset_height + 0.5
+);
+const QSize voice_replay_button_size(voice_replay_button_width,voice_replay_button_height);
 const QSize level_button_size(412,132);
 
 const double select_scene_button_asset_width = 161.0;
@@ -255,6 +268,7 @@ const bool button_size_is_variant_specific[button_group_capacity] = {
     false,
     false,
     false,
+    false,
     false
 };
 
@@ -266,9 +280,10 @@ const QSize button_size[button_group_capacity][button_variant_capacity] = {
     { retry_button_size },
     { level_button_size },
     { select_scene_navigation_button_size },
-    { select_in_level_button_size }
+    { select_in_level_button_size },
+    { voice_replay_button_size }
 };
-                                  //空白     //刷新        //主界面       //音乐开关    //游戏内重试   //选择每个关卡   //选关界面    //关卡进选关
+                                  //空白     //刷新        //主界面       //音乐开关    //游戏内重试   //选择每个关卡   //选关界面    //关卡进选关   //语音回放
 
 inline QSize buttonSize(int group,int variant = 0)
 {
@@ -297,7 +312,8 @@ const int button_type[button_group_capacity][button_variant_capacity] =
     {2},//4：游戏内重试按钮
     {0,2,2,2,2,2,2,2,2,2,2},//5：选择每个关卡的按钮
     {0,2,2},//6：选关界面的按钮
-    {2}//7：关卡内进入选关界面的按钮
+    {2},//7：关卡内进入选关界面的按钮
+    {2}//8：对话语音回放按钮
 };
 
 
@@ -584,6 +600,21 @@ const File_of_button file_of_button[button_group_capacity][button_variant_capaci
             {},
             {}
         }
+    },
+
+    // === 索引8：对话语音回放按钮 (SCB类型) ===
+    {
+        {    // voice_replay_button = 8
+            {},
+            {
+                "../../Resources/Pictures/Icon-s/Button-s/Voice_Replay_Normal.png",
+                "../../Resources/Pictures/Icon-s/Button-s/Voice_Replay_Hover.png",
+                "../../Resources/Audios/Sound-s/button_hovered.ogg",
+                ""
+            },
+            {},
+            {}
+        }
     }
 };
 
@@ -748,33 +779,6 @@ const DialogueLineConfig dialogue_failed = {
     "巡",
     "铲子坏掉了呢……换一把新的再来吧。",
     "../../Resources/Audios/Ciallo/Ciallo_Meguru_Pure.flac"
-};
-
-//CG界面对话。空列表表示该关卡暂无CG对话框。
-const QList<DialogueLineConfig> level_dialogue_lines[level_button_count + 1] = {
-    {},
-    {},
-    {},
-    {
-        {
-            "宁宁",
-            "那个，不对 啊哇，啊嘎嘎嘎——",
-            "../../Resources/Audios/Voice-s/Nene.flac"
-        }
-    },
-    {
-        {
-            "憧子",
-            "来，啊——嗯",
-            "../../Resources/Audios/Voice-s/Touko.flac"
-        }
-    },
-    {},
-    {},
-    {},
-    {},
-    {},
-    {}
 };
 
 //界面的键值

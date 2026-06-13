@@ -12,6 +12,7 @@
 #include <QPushButton>
 #include <QSize>
 #include <QMouseEvent>
+#include <QWheelEvent>
 #include <QPair>
 #include <QTimer>
 #include <QMediaPlayer>
@@ -77,6 +78,7 @@ public:
     void keyPressEvent(QKeyEvent* event)override;
     void keyReleaseEvent(QKeyEvent* event)override;
     void mousePressEvent(QMouseEvent *event)override;
+    void wheelEvent(QWheelEvent* event)override;
     void changeEvent(QEvent *event)override;
 
     void init_game(); //初始化整个游戏
@@ -131,6 +133,7 @@ public:
     SCButton* level_button[Default::level_button_count + 1];
     SCButton* select_scene_button[Default::select_scene_button_count + 1];
     SCButton* select_in_level_button = nullptr;
+    SCButton* voice_replay_button = nullptr;
 
     void import_buttons();//初始化按钮
 
@@ -242,19 +245,32 @@ private:
     void clearDialogue(bool stopVoice);
     void clearDialogueItem();
     void playDialogueVoice(const QString& voicePath);
+    void replayDialogueVoice();
     void playDialogueHideSound();
     void restoreMeguruAfterDigHint();
+    void renderCurrentDialogueText();
+    void startDialogueTextScroll();
+    void stopDialogueTextScroll();
+    bool finishDialogueTextScroll();
+    void updateVoiceReplayButton();
+    void hideVoiceReplayButton();
+    void advanceCurrentDialogueByInput();
     bool hasActiveStory() const;
     bool hasPreGameStoryForLevel(Level* level) const;
     bool isLevelSceneVisible() const;
     bool isLevelControlLocked() const;
     bool tryBeginUiTransition();
     void endUiTransition();
-    void startStory(DialogueSceneType type,const QList<Default::StoryStepConfig>& steps);
+    void startStory(DialogueSceneType type,const QString& moduleId,const QString& startLabel = QString());
+    void startStory(DialogueSceneType type,
+                    const QString& moduleId,
+                    const QList<Default::StoryStepConfig>& steps,
+                    const QString& startLabel = QString());
     void buildStoryLabelIndex();
     void showStoryStep(int stepIndex,bool restartVoice);
     void advanceStory();
-    void jumpToStoryLabel(const QString& label);
+    void jumpToStoryLabel(const QString& targetRef);
+    void parseStoryTarget(const QString& targetRef,QString& moduleId,QString& label) const;
     int nextStoryStepIndex(const Default::StoryStepConfig& step) const;
     void showStoryChoices(const Default::StoryStepConfig& step);
     void layoutStoryChoiceButtons();
@@ -271,11 +287,18 @@ private:
     int dialogue_line_index = -1;
     bool dialogue_hidden = false;
     QGraphicsPixmapItem* dialogue_item = nullptr;
+    QTimer* dialogue_text_scroll_timer = nullptr;
+    QString current_dialogue_speaker;
+    QString current_dialogue_text;
+    QString current_dialogue_voice;
+    int dialogue_visible_characters = 0;
+    int dialogue_total_characters = 0;
     QMediaPlayer* dialogue_voice_player = nullptr;
     QAudioOutput* dialogue_voice_output = nullptr;
     QMediaPlayer* dialogue_hide_sound_player = nullptr;
     QAudioOutput* dialogue_hide_sound_output = nullptr;
     bool story_active = false;
+    QString story_module_id;
     QList<Default::StoryStepConfig> story_steps;
     QHash<QString,int> story_label_to_index;
     int story_step_index = -1;
