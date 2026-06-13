@@ -26,3 +26,7 @@ backlog.txt
 Thumbs.db
 .vscode/
 .vs/
+
+# Packaged playable release
+!可运行版本-v-1.0.0/
+!可运行版本-v-1.0.0/**
